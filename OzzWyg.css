@@ -1,0 +1,291 @@
+.ozz-wyg {
+  font-family: sans-serif;
+}
+.ozz-wyg__toolbar {
+  padding: 3px;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+  border-radius: 5px 5px 0 0;
+  background: #F7F9FA;
+}
+.ozz-wyg__tool {
+  display: inline-block;
+  position: relative;
+}
+.ozz-wyg__tool-has-child {
+  display: flex;
+  flex-direction: row;
+}
+.ozz-wyg__tool-has-child > button {
+  margin-right: 6px;
+}
+.ozz-wyg__tool > button {
+  margin-right: 6px;
+}
+.ozz-wyg__tool button {
+  border: 1px solid transparent;
+  padding: 6px;
+  height: 32px;
+  background-color: #F7F9FA;
+  border-radius: 3px;
+}
+.ozz-wyg__tool button:not(.ozz-wyg-regular-btn) {
+  width: 32px;
+}
+.ozz-wyg__tool button:hover {
+  border: 1px solid #ddd;
+  background-color: #eee;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button:not(.ozz-wyg-regular-btn) {
+  font-size: 0;
+  line-height: 1.7rem;
+  background-image: url("./tools.svg");
+  background-repeat: no-repeat;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=bold] {
+  background-position: 3px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=italic] {
+  background-position: -34px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=underline] {
+  background-position: -70px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=strikethrough] {
+  background-position: -106px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=subscript] {
+  background-position: -142px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=superscript] {
+  background-position: -178px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=link] {
+  background-position: -214px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=table] {
+  background-position: -285px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=insertOrderedList] {
+  background-position: -322px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=insertUnorderedList] {
+  background-position: -357px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=justifyLeft] {
+  background-position: -393px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=justifyRight] {
+  background-position: -431px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=justifyCenter] {
+  background-position: -466px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=justifyFull] {
+  background-position: -502px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=media] {
+  background-position: -610px 3px;
+}
+.ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=codeView] {
+  background-position: -645px 3px;
+}
+.ozz-wyg__tool-child {
+  display: none;
+  position: absolute;
+  padding: 3px;
+  max-height: 150px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  transform: translateX(-4px);
+  background-color: #F7F9FA;
+}
+.ozz-wyg__tool-child button {
+  margin: 0;
+}
+.ozz-wyg__tool .more-tools-trigger {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  background-color: #eee;
+  border-left: none;
+  display: none;
+}
+.ozz-wyg__tool:hover .ozz-wyg__tool-child {
+  display: block;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting {
+  display: none;
+  position: absolute;
+  background: #F7F9FA;
+  padding: 8px;
+  border: 1px solid #eee;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting label,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting label {
+  font-size: 13px;
+  font-weight: 600;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting input,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting input {
+  margin: 5px 0;
+  padding: 5px;
+  width: 200px;
+  border: 1px solid #ddd;
+  outline: none;
+  border-radius: 3px;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting button,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting button {
+  background: #232327;
+  color: #F7F9FA;
+  padding: 5px 10px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting button:hover,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting button:hover {
+  background: #424247;
+}
+.ozz-wyg__tool .ozz-wyg__tool-link-setting.active,
+.ozz-wyg__tool .ozz-wyg__tool-table-setting.active {
+  display: block;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting.active {
+  display: flex;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting input {
+  width: 45px;
+  padding: 8px 5px;
+  display: inline-block;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-headings-trigger > button {
+  width: 120px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child {
+  width: 112px;
+  padding: 5px 3px 3px;
+  transform: none;
+  overflow-y: auto;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 3px 8px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-weight: 500;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button:hover {
+  background: #eee;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h1] {
+  font-size: 18px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h2] {
+  font-size: 17px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h3] {
+  font-size: 16px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h4] {
+  font-size: 15px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h5] {
+  font-size: 14px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=h6] {
+  font-size: 12px;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-action=quote] {
+  border-left: 4px solid #eec927;
+  border-radius: 0;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-action=code] {
+  font-family: monospace;
+}
+.ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-action=code], .ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-action=quote], .ozz-wyg__tool--headings .ozz-wyg__tool-child button[data-value=P] {
+  font-weight: 400;
+  font-size: 14px;
+  padding: 5px 8px;
+}
+.ozz-wyg__editor-area {
+  min-height: 150px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 0 0 5px 5px;
+  outline: none;
+}
+.ozz-wyg__editor-area.ozz-wyg-html-view {
+  font-family: monospace;
+  background: #232327;
+  color: #ddd;
+  font-size: 14px;
+  line-height: 1.75rem;
+}
+.ozz-wyg__editor-area h1 {
+  margin: 20px 0 10px;
+}
+.ozz-wyg__editor-area blockquote,
+.ozz-wyg__editor-area p {
+  font-size: 14px;
+  line-height: 1.6rem;
+}
+.ozz-wyg__editor-area blockquote {
+  margin: 5px 5px 5px 0;
+  padding: 5px 5px 5px 20px;
+  border-left: 4px solid #000;
+  background: #F7F9FA;
+}
+.ozz-wyg__editor-area blockquote > p {
+  margin-top: 0;
+}
+.ozz-wyg__editor-area code {
+  font-family: monospace;
+  padding: 5px;
+  background: #eee;
+  line-height: 1.75rem;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+.ozz-wyg__editor-area .ozz-wyg-popover {
+  position: absolute;
+  padding: 6px 40px 6px 6px;
+  max-width: 400px;
+  margin-top: 10px;
+  margin-left: -30px;
+  border-radius: 5px;
+  background: #F7F9FA;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.01);
+}
+.ozz-wyg__editor-area .ozz-wyg-popover a {
+  cursor: pointer;
+  position: relative;
+  font-size: 12px;
+  z-index: 100;
+}
+.ozz-wyg__editor-area .ozz-wyg-popover .ozz-wyg-unlink {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  border-radius: 3px;
+  width: 27px;
+  height: 27px;
+  font-size: 0;
+  line-height: 1.7rem;
+  background-image: url("./tools.svg");
+  background-repeat: no-repeat;
+  border: 1px solid #ddd;
+  background-position: -251px 0px;
+  outline: none;
+}/*# sourceMappingURL=OzzWyg.css.map */

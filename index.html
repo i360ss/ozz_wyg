@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ozz WYSIWYG Editor</title>
+  <link rel="stylesheet" href="./OzzWyg.css">
+</head>
+<body>
+
+  <div class="wysiwyg-editor" data-ozz-wyg></div>
+  <br>
+  <div class="wysiwyg-editor2" data-ozz-wyg></div>
+  <br>
+  <div class="wysiwyg-editor3" data-ozz-wyg></div>
+
+  <script src="OzzWyg.js" ></script>
+  <script>
+    new OzzWyg({
+      selector: '.wysiwyg-editor',
+    });
+
+    new OzzWyg({
+      selector: '.wysiwyg-editor2',
+      tools: [
+        'justifyLeft',
+        'underline',
+        'link'
+      ]
+    });
+  </script>
+</body>
+</html>
