@@ -335,7 +335,10 @@ class OzzWyg {
         if (anchor.getAttribute('role') !== 'popover') {
           const popoverDOM = document.createElement('span');
           popoverDOM.classList.add('ozz-wyg-popover');
-          popoverDOM.innerHTML = `<a href="${anchor.href}" role="popover" target="_blank">${anchor.href}</a><button class="ozz-wyg-unlink"></button>`;
+          popoverDOM.innerHTML = `
+          <a href="${anchor.href}" role="popover" contenteditable="false" target="_blank">${anchor.href}</a>
+          <button class="ozz-wyg-editlink"></button>
+          <button class="ozz-wyg-unlink"></button>`;
           popoverDOM.style.top = `${e.clientY}px`;
           popoverDOM.style.left = `${e.clientX}px`;
 
@@ -351,13 +354,18 @@ class OzzWyg {
           });
 
           // Unlink
-          const unlinkButton = popoverDOM.querySelector('.ozz-wyg-unlink');
-          unlinkButton.addEventListener('click', (ev) => {
+          popoverDOM.querySelector('.ozz-wyg-unlink').addEventListener('click', (ev) => {
             ev.stopPropagation();
             const textNode = document.createTextNode(anchor.textContent);
             anchor.parentNode.replaceChild(textNode, anchor);
             popoverDOM.remove();
             removeEventListener('click', removePopoverEv);
+          });
+
+          // Edit this link
+          popoverDOM.querySelector('.ozz-wyg-editlink').addEventListener('click', () => {
+            const linkBtn = this.editor.querySelector('button[data-action="link"]');
+            setTimeout(() => { linkBtn.click() }, 1);
           });
         }
       });
