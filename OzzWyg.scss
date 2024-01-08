@@ -7,14 +7,18 @@ $dark-1: #18181A;
 $dark-2: #232327;
 $dark-3: #424247;
 
+$fs-1: 14px;
+
 .ozz-wyg {
   font-family: sans-serif;
   &__toolbar {
+    position: relative;
     padding: 3px;
     border: 1px solid $light-3;
     border-bottom-color: transparent;
     border-radius: 5px 5px 0 0;
     background: $light-1;
+    z-index: 110;
   }
   &__tool {
     display: inline-block;
@@ -24,6 +28,13 @@ $dark-3: #424247;
       flex-direction: row;
       > button {
         margin-right: 6px;
+      }
+      &:after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        width: 100%;
+        height: 6px;
       }
     }
     > button {
@@ -105,6 +116,7 @@ $dark-3: #424247;
       display: none;
       position: absolute;
       padding: 3px;
+      margin-top: 4px;
       max-height: 150px;
       border: 1px solid $light-4;
       border-radius: 3px;
@@ -132,8 +144,11 @@ $dark-3: #424247;
       display: none;
       position: absolute;
       background: $light-1;
-      padding: 8px;
-      border: 1px solid $light-2;
+      padding: 12px;
+      margin-top: 4px;
+      border: 1px solid $light-3;
+      border-radius: 0 0 3px 3px;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
       label {
         font-size: 13px;
         font-weight: 600;
@@ -162,11 +177,22 @@ $dark-3: #424247;
       }
     }
     .ozz-wyg__tool-table-setting {
-      flex-direction: row;
       align-items: center;
       gap: 6px;
+      padding-bottom: 60px;
       &.active {
         display: flex;
+      }
+      .sub-options {
+        position: absolute;
+        bottom: 5px;
+        left: 0;
+        gap: 3px;
+        align-items: center;
+        span {
+          display: flex;
+          flex-direction: row;
+        }
       }
       input {
         width: 45px;
@@ -211,7 +237,7 @@ $dark-3: #424247;
             font-size: 15px;
           }
           &[data-value="h5"] {
-            font-size: 14px;
+            font-size: $fs-1;
           }
           &[data-value="h6"] {
             font-size: 12px;
@@ -227,14 +253,11 @@ $dark-3: #424247;
           &[data-action="quote"],
           &[data-value="P"] {
             font-weight: 400;
-            font-size: 14px;
+            font-size: $fs-1;
             padding: 5px 8px;
           }
         }
       }
-    }
-    &--link {
-      
     }
   }
   &__editor-area {
@@ -248,7 +271,7 @@ $dark-3: #424247;
       font-family: monospace;
       background: $dark-2;
       color: $light-3;
-      font-size: 14px;
+      font-size: $fs-1;
       line-height: 1.75rem;
     }
     h1 {
@@ -256,7 +279,7 @@ $dark-3: #424247;
     }
     blockquote,
     p {
-      font-size: 14px;
+      font-size: $fs-1;
       line-height: 1.6rem;
     }
     blockquote {
@@ -276,6 +299,29 @@ $dark-3: #424247;
       border: 1px solid $light-3;
       border-radius: 3px;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      thead,
+      tfoot {
+        th,
+        td {
+          background: $light-2;
+        }
+      }
+      tr {
+        padding: 0;
+      }
+      th,
+      td {
+        border: 1px solid $light-4;
+        padding: 6px 10px;
+        min-width: 30px;
+        background: $light-1;
+        font-size: $fs-1;
+      }
+    }
+    // Popover
     .ozz-wyg-popover {
       position: absolute;
       padding: 6px 65px 6px 6px;
@@ -308,12 +354,65 @@ $dark-3: #424247;
       .ozz-wyg-editlink {
         right: 32px;
         top: 2px;
-        background-position: -215px 0px;
+        background-position: -684px 0px;
       }
       .ozz-wyg-unlink {
         right: 2px;
         top: 2px;
         background-position: -251px 0px;
+      }
+    }
+    // Table Wrapper
+    .ozz-wyg-table-wrapper {
+      position: relative;
+      width: calc(100% - 30px);
+      .ozz-wyg-table-actions {
+        &__row,
+        &__column {
+          position: absolute;
+          display: flex;
+          button {
+            font-size: 0;
+            width: 24px;
+            height: 24px;
+            padding: 6px;
+            line-height: 0.5rem;
+            border: 1px solid $light-4;
+            background-color: $light-2;
+            background-image: url('./tools.svg');
+            background-repeat: no-repeat;
+            cursor: pointer;
+            &:hover {
+              background-color: $light-3;
+            }
+            &[data-tbl-action="addrow"],
+            &[data-tbl-action="addcol"] {
+              background-position: -721px 0px;
+            }
+            &[data-tbl-action="deleterow"],
+            &[data-tbl-action="deletecol"] {
+              background-position: -757px 0px;
+            }
+          }
+        }
+        &__row {
+          bottom: -23px;
+          left: 50%;
+          transform: translateX(-50%);
+          flex-direction: row;
+          button {
+            border-radius: 0 0 3px 3px;
+          }
+        }
+        &__column {
+          top: 50%;
+          right: -23px;
+          transform: translateY(-50%);
+          flex-direction: column;
+          button {
+            border-radius: 0 3px 3px 0;
+          }
+        }
       }
     }
   }

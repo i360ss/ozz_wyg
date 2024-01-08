@@ -156,6 +156,28 @@ class OzzWyg {
       });
     });
     this.playGround = this.editor.querySelector('[data-editor-area]');
+
+    // Modify on input
+    this.playGround.addEventListener('input', () => {
+      // Modify tables
+      const tables = this.playGround.querySelectorAll('table');
+      tables.forEach((table) => {
+        // Wrap table
+        if (!table.closest('.ozz-wyg-table-wrapper')) {
+          const tableWrapped = document.createElement('div');
+          tableWrapped.classList.add('ozz-wyg-table-wrapper');
+          tableWrapped.innerHTML = table.outerHTML;
+          table.outerHTML = tableWrapped.outerHTML;
+        }
+
+        // Cleat inline styles
+        table.removeAttribute('style');
+        const tItems = table.querySelectorAll('tbody, thead, tfoot, tr, td, th');
+        tItems.forEach(item => {
+          item.removeAttribute('style');
+        });
+      });
+    });
   }
 
   /**
@@ -246,11 +268,11 @@ class OzzWyg {
 
     if (action == 'link') {
       // Link
-      this.linkPopup(event);
+      this.linkPopUp(event);
     }
     else if (action == 'table') {
       // Create Table
-      this.tablePopup(event);
+      this.tablePopUp(event);
     }
     else if (action == 'media') {
       // Upload Media
@@ -269,7 +291,7 @@ class OzzWyg {
   /**
    * Link Tool Popup
    */
-  linkPopup(ev) {
+  linkPopUp(ev) {
     const linkCls = 'ozz-wyg__tool-link-',
       parent = ev.target.closest(`.${linkCls}trigger`),
       settingsDOM = parent.querySelector(`.${linkCls}setting`),
@@ -334,16 +356,25 @@ class OzzWyg {
       anchor.addEventListener('click', (e) => {
         if (anchor.getAttribute('role') !== 'popover') {
           const popoverDOM = document.createElement('span');
+          popoverDOM.setAttribute('contenteditable', false);
           popoverDOM.classList.add('ozz-wyg-popover');
           popoverDOM.innerHTML = `
-          <a href="${anchor.href}" role="popover" contenteditable="false" target="_blank">${anchor.href}</a>
+          <a href="${anchor.href}" role="popover" target="_blank">${anchor.href}</a>
           <button class="ozz-wyg-editlink"></button>
           <button class="ozz-wyg-unlink"></button>`;
-          popoverDOM.style.top = `${e.clientY}px`;
-          popoverDOM.style.left = `${e.clientX}px`;
 
           if (this.editor.querySelectorAll('.ozz-wyg-popover').length === 0) {
             anchor.insertAdjacentElement('afterend', popoverDOM);
+
+            // Position popover element
+            let {rx, ry} = 0;
+            if (popoverDOM.closest('.ozz-wyg-table-wrapper')) {
+              const cTbl = popoverDOM.closest('.ozz-wyg-table-wrapper');
+              ry = cTbl.getBoundingClientRect().y;
+              rx = cTbl.getBoundingClientRect().x;
+            }
+            popoverDOM.style.top = `${e.clientY - ry}px`;
+            popoverDOM.style.left = `${e.clientX - rx}px`;
           }
 
           const removePopoverEv = document.addEventListener('click', (ev) => {
@@ -375,17 +406,88 @@ class OzzWyg {
   /**
    * Table Popup
    */
-  tablePopup(ev) {
+  tablePopUp(ev) {
     const
       tableCls = 'ozz-wyg__tool-table-',
       parent = ev.target.closest(`.${tableCls}trigger`),
-      settingsDOM = parent.querySelector(`.${tableCls}setting`);
+      settingsDOM = parent.querySelector(`.${tableCls}setting`),
+      selection = window.getSelection();
+
+    // Store selection
+    let sRange = false;
+    if (selection.getRangeAt && selection.rangeCount) {
+      sRange = selection.getRangeAt(0).cloneRange();
+    }
 
     settingsDOM.innerHTML = `
-      <input type="number" min="1" max="100" placeholder="X" name="row-${this.editorID}">
-      <input type="number" min="1" max="100" placeholder="Y" name="column-${this.editorID}">
-      <button class="ozz-wyg-regular-btn">Insert</button>`;
+      <input type="number" min="1" max="100" value="2" placeholder="X" id="row-${this.editorID}">
+      <input type="number" min="1" max="100" value="2" placeholder="Y" id="column-${this.editorID}">
+      <span class="sub-options">
+        <span>
+          <input type="checkbox" id="has-th-${this.editorID}">
+          <label for="has-th-${this.editorID}"">No Header</label>
+        </span>
+        <span>
+          <input type="checkbox" id="has-footer-${this.editorID}">
+          <label for="has-footer-${this.editorID}">No Footer</label>
+        </span>
+      </span>
+      <button class="ozz-wyg-regular-btn" id="insertTableTrigger-${this.editorID}">Insert</button>`;
     settingsDOM.classList.toggle('active');
+
+    // Insert or update Table
+    const insertTableTrigger = settingsDOM.querySelector('#insertTableTrigger-' + this.editorID);
+    insertTableTrigger.addEventListener('click', () => {
+      let rows = settingsDOM.querySelector('#row-' + this.editorID).value,
+      columns = settingsDOM.querySelector('#column-' + this.editorID).value,
+      noHead = settingsDOM.querySelector('#has-th-' + this.editorID).checked,
+      noFooter = settingsDOM.querySelector('#has-footer-' + this.editorID).checked;
+      rows = (rows > 100) ? 100 : rows;
+      columns = (columns > 100) ? 100 : columns;
+
+      // Create Table
+      const table = document.createElement('table');
+      // Table Head
+      if (noHead === false) {
+        const tHead = table.createTHead();
+        const headerRow = tHead.insertRow();
+        for (let i = 0; i < columns; i++) {
+          const th = document.createElement('th');
+          headerRow.appendChild(th);
+        }
+      }
+
+      // Table Body
+      const tBody = table.createTBody();
+      for (let i = 0; i < rows; i++) {
+        const tRows = tBody.insertRow(i);
+        for (let i = 0; i < columns; i++) {
+          tRows.insertCell(i);
+        }
+      }
+
+      // Table Footer
+      if (noFooter === false) {
+        const tFoot = table.createTFoot();
+        const footRow = tFoot.insertRow();
+        for (let i = 0; i < columns; i++) {
+          footRow.insertCell(i);
+        }
+      }
+
+      // Set Range Again
+      if (sRange) {
+        selection.removeAllRanges();
+        selection.addRange(sRange);
+      }
+
+      // Create Table Wrapper
+      const $table = document.createElement('div');
+      $table.classList.add('ozz-wyg-table-wrapper');
+      $table.innerHTML = table.outerHTML;
+      document.execCommand('insertHTML', false, `<br>${$table.outerHTML}<br>`);
+      this.tableActions(); // Table Actions
+    });
 
     // Close popup
     document.addEventListener('click', (e) => {
@@ -393,6 +495,156 @@ class OzzWyg {
         settingsDOM.classList.remove('active');
       }
     });
+  }
+
+  /**
+   * Table actions
+   */
+  tableActions() {
+    const $table = document.querySelectorAll('.ozz-wyg-table-wrapper');
+    $table.forEach(tbl => {
+      tbl.addEventListener('mouseover', () => {
+        let tblTools = tbl.querySelectorAll('.ozz-wyg-table-actions');
+        if (tblTools.length === 0) {
+          const actions = document.createElement('div');
+          actions.setAttribute('contenteditable', false);
+          actions.classList.add('ozz-wyg-table-actions');
+          actions.innerHTML = `
+          <span class="ozz-wyg-table-actions__row">
+            <button title="Add Row" data-tbl-action="addrow">Add Row</button>
+            <button title="Remove Row" data-tbl-action="deleterow">Delete Row</button>
+          </span>
+          <span class="ozz-wyg-table-actions__column">
+            <button title="Add Column" data-tbl-action="addcol">Add Column</button>
+            <button title="Remove Column" data-tbl-action="deletecol">Delete Column</button>
+          </span>`;
+
+          // Perform Table Actions
+          actions.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+              e.preventDefault();
+              const action = e.target.getAttribute('data-tbl-action');
+              switch (action) {
+                case 'addrow':
+                  this.addTableRow(tbl);
+                  break;
+                case 'deleterow':
+                  this.deleteTableRow(tbl);
+                  break;
+                case 'addcol':
+                  this.addTableCol(tbl);
+                  break;
+                case 'deletecol':
+                  this.deleteTableCol(tbl);
+                  break;
+                default:
+                  break;
+              }
+            });
+          });
+          tbl.appendChild(actions);
+        }
+
+        tbl.addEventListener('mouseleave', () => {
+          tblTools[0] ? tblTools[0].remove() : false;
+        });
+      });
+    });
+  }
+
+  /**
+   * Add Table Row
+   * @param table_wrap
+   */
+  addTableRow(table_wrap) {
+    const tbody = table_wrap.querySelector('tbody');
+    if (tbody) {
+      const cellsCount = tbody.querySelector('tr')?.querySelectorAll('td')?.length ?? 1;
+      const newRow = tbody.insertRow(-1);
+      for (let i = 0; i < cellsCount; i++) {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        newRow.appendChild(td);
+      }
+    }
+  }
+
+  /**
+   * Delete Table Row
+   * @param table_wrap
+   */
+  deleteTableRow(table_wrap) {
+    const tbody = table_wrap.querySelector('table tbody');
+    if (tbody && tbody.rows.length > 1) {
+      tbody.deleteRow(-1);
+    }
+  }
+
+  /**
+   * Add Table Column
+   * @param table_wrap
+   */
+  addTableCol(table_wrap) {
+    const thead = table_wrap.querySelector('thead');
+    const tbody = table_wrap.querySelector('tbody');
+    const tfoot = table_wrap.querySelector('tfoot');
+
+    const addCellToRows = (rows, newCellIndex) => {
+      rows.forEach((row) => {
+        const td = document.createElement('td');
+        td.innerHTML = '<br>';
+        row.insertBefore(td, row.cells[newCellIndex]);
+      });
+    }
+
+    if (thead) {
+      const headerRows = thead.querySelectorAll('tr');
+      const newCellIndex = headerRows[0]?.querySelectorAll('th, td')?.length ?? 0;
+      addCellToRows(headerRows, newCellIndex);
+    }
+
+    if (tbody) {
+      const bodyRows = tbody.querySelectorAll('tr');
+      const newCellIndex = bodyRows[0]?.querySelectorAll('td')?.length ?? 0;
+      addCellToRows(bodyRows, newCellIndex);
+    }
+
+    if (tfoot) {
+      const footerRows = tfoot.querySelectorAll('tr');
+      const newCellIndex = footerRows[0]?.querySelectorAll('td')?.length ?? 0;
+      addCellToRows(footerRows, newCellIndex);
+    }
+  }
+
+  /**
+   * Delete Table Column
+   * @param table_wrap
+   */
+  deleteTableCol(table_wrap) {
+    const thead = table_wrap.querySelector('thead');
+    const tbody = table_wrap.querySelector('tbody');
+    const tfoot = table_wrap.querySelector('tfoot');
+
+    const deleteLastCell = (rows) => {
+      const lastCellIndex = rows[0]?.cells.length - 1;
+      if (lastCellIndex > 0) {
+        rows.forEach((row) => {
+          row.deleteCell(lastCellIndex);
+        });
+      }
+    }
+
+    if (thead) {
+      deleteLastCell(thead.querySelectorAll('tr'));
+    }
+
+    if (tbody) {
+      deleteLastCell(tbody.querySelectorAll('tr'));
+    }
+
+    if (tfoot) {
+      deleteLastCell(tfoot.querySelectorAll('tr'));
+    }
   }
 
   /**
@@ -410,7 +662,7 @@ class OzzWyg {
   quoteText() {
     const
       selection = window.getSelection(),
-      quote = '<blockquote><p>' + selection.toString() + 
+      quote = '<blockquote><p>' + ((selection.toString() == '') ? '<br>' : selection.toString()) + 
       '</p><footer class="blockquote-footer">--Footer, <cite>cite</cite></footer></blockquote><br>';
 
     document.execCommand('insertHTML', false, quote);
@@ -434,7 +686,11 @@ class OzzWyg {
     if (this.isHTML()) {
       this.playGround.classList.remove('ozz-wyg-html-view');
       this.playGround.innerHTML = this.playGround.textContent;
+      this.tableActions(); // Init table Actions
     } else {
+      this.playGround.querySelectorAll('[contenteditable="false"]').forEach(element => {
+        element.remove();
+      });
       this.playGround.classList.add('ozz-wyg-html-view');
       this.playGround.textContent = this.playGround.innerHTML;
     }

@@ -2,11 +2,13 @@
   font-family: sans-serif;
 }
 .ozz-wyg__toolbar {
+  position: relative;
   padding: 3px;
   border: 1px solid #ddd;
   border-bottom-color: transparent;
   border-radius: 5px 5px 0 0;
   background: #F7F9FA;
+  z-index: 110;
 }
 .ozz-wyg__tool {
   display: inline-block;
@@ -18,6 +20,13 @@
 }
 .ozz-wyg__tool-has-child > button {
   margin-right: 6px;
+}
+.ozz-wyg__tool-has-child:after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  width: 100%;
+  height: 6px;
 }
 .ozz-wyg__tool > button {
   margin-right: 6px;
@@ -94,6 +103,7 @@
   display: none;
   position: absolute;
   padding: 3px;
+  margin-top: 4px;
   max-height: 150px;
   border: 1px solid #ccc;
   border-radius: 3px;
@@ -119,8 +129,11 @@
   display: none;
   position: absolute;
   background: #F7F9FA;
-  padding: 8px;
-  border: 1px solid #eee;
+  padding: 12px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
 }
 .ozz-wyg__tool .ozz-wyg__tool-link-setting label,
 .ozz-wyg__tool .ozz-wyg__tool-table-setting label {
@@ -154,12 +167,23 @@
   display: block;
 }
 .ozz-wyg__tool .ozz-wyg__tool-table-setting {
-  flex-direction: row;
   align-items: center;
   gap: 6px;
+  padding-bottom: 60px;
 }
 .ozz-wyg__tool .ozz-wyg__tool-table-setting.active {
   display: flex;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting .sub-options {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  gap: 3px;
+  align-items: center;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting .sub-options span {
+  display: flex;
+  flex-direction: row;
 }
 .ozz-wyg__tool .ozz-wyg__tool-table-setting input {
   width: 45px;
@@ -258,6 +282,27 @@
   border: 1px solid #ddd;
   border-radius: 3px;
 }
+.ozz-wyg__editor-area table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ozz-wyg__editor-area table thead th,
+.ozz-wyg__editor-area table thead td,
+.ozz-wyg__editor-area table tfoot th,
+.ozz-wyg__editor-area table tfoot td {
+  background: #eee;
+}
+.ozz-wyg__editor-area table tr {
+  padding: 0;
+}
+.ozz-wyg__editor-area table th,
+.ozz-wyg__editor-area table td {
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  min-width: 30px;
+  background: #F7F9FA;
+  font-size: 14px;
+}
 .ozz-wyg__editor-area .ozz-wyg-popover {
   position: absolute;
   padding: 6px 65px 6px 6px;
@@ -291,10 +336,57 @@
 .ozz-wyg__editor-area .ozz-wyg-popover .ozz-wyg-editlink {
   right: 32px;
   top: 2px;
-  background-position: -215px 0px;
+  background-position: -684px 0px;
 }
 .ozz-wyg__editor-area .ozz-wyg-popover .ozz-wyg-unlink {
   right: 2px;
   top: 2px;
   background-position: -251px 0px;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper {
+  position: relative;
+  width: calc(100% - 30px);
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row, .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column {
+  position: absolute;
+  display: flex;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button, .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button {
+  font-size: 0;
+  width: 24px;
+  height: 24px;
+  padding: 6px;
+  line-height: 0.5rem;
+  border: 1px solid #ccc;
+  background-color: #eee;
+  background-image: url("./tools.svg");
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button:hover, .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button:hover {
+  background-color: #ddd;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button[data-tbl-action=addrow], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button[data-tbl-action=addcol], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button[data-tbl-action=addrow], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button[data-tbl-action=addcol] {
+  background-position: -721px 0px;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button[data-tbl-action=deleterow], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button[data-tbl-action=deletecol], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button[data-tbl-action=deleterow], .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button[data-tbl-action=deletecol] {
+  background-position: -757px 0px;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row {
+  bottom: -23px;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: row;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button {
+  border-radius: 0 0 3px 3px;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column {
+  top: 50%;
+  right: -23px;
+  transform: translateY(-50%);
+  flex-direction: column;
+}
+.ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button {
+  border-radius: 0 3px 3px 0;
 }/*# sourceMappingURL=OzzWyg.css.map */
