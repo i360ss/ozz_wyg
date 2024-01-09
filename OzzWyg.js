@@ -83,7 +83,7 @@ class OzzWyg {
       },
       'link': {
         name: 'Link',
-        dom: '<div class="ozz-wyg__tool-link-trigger"><button data-action="link">Link</button><div class="ozz-wyg__tool-link-setting" role="dialog"></div></div>'
+        dom: '<div class="ozz-wyg__tool-link-trigger"><button data-action="link">Link</button><div class="ozz-wyg__tool-link-setting"></div></div>'
       },
       'table': {
         name: 'Table',
@@ -269,17 +269,15 @@ class OzzWyg {
     if (action == 'link') {
       // Link
       this.linkPopUp(event);
-    }
-    else if (action == 'table') {
+    } else if (action == 'table') {
       // Create Table
       this.tablePopUp(event);
-    }
-    else if (action == 'media') {
-      // Upload Media
-    }
-    else if (action == 'quote') {
+    } else if (action == 'media') {
+      // insert Media
+      this.mediaPopUp(event);
+    } else if (action == 'quote') {
       this.quoteText();
-    }else if (action == 'code') {
+    } else if (action == 'code') {
       this.codeText();
     } else if (action == 'codeView') {
       this.toggleCodeView();
@@ -645,6 +643,178 @@ class OzzWyg {
     if (tfoot) {
       deleteLastCell(tfoot.querySelectorAll('tr'));
     }
+  }
+
+  /**
+   * Insert Media
+   */
+  mediaPopUp(ev) {
+    const linkCls = 'ozz-wyg__tool-media-',
+      parent = ev.target.closest(`.${linkCls}trigger`),
+      settingsDOM = parent.querySelector(`.${linkCls}setting`),
+      selection = window.getSelection();
+
+    // Store selection
+    let sRange = false;
+    if (selection.getRangeAt && selection.rangeCount) {
+      sRange = selection.getRangeAt(0).cloneRange();
+    }
+
+    // Get Selected Media element tp update - To Do
+    let existingURL = '';
+    let existingALT = '';
+
+    settingsDOM.innerHTML = `
+      <label>Upload:</label> <input type="file" accept="image/*,video/*" id="file-${this.editorID}" value="${existingURL}"><br>
+      <label>Media URL:</label> <input type="text" id="url-${this.editorID}" value="${existingURL}"><br>
+      <label>Alt:</label> <input type="text" id="alt-${this.editorID}" value="${existingALT}"><br>
+      <button class="ozz-wyg-regular-btn" id="insertMediaTrigger-${this.editorID}">${existingURL ? 'Update' : 'Insert'}</button>`;
+    settingsDOM.classList.toggle('active');
+
+    // Insert Media
+    const insertMediaTrigger = settingsDOM.querySelector('#insertMediaTrigger-' + this.editorID);
+    insertMediaTrigger.addEventListener('click', () => {
+      const files = settingsDOM.querySelector('#file-' + this.editorID).files;
+      const url = settingsDOM.querySelector('#url-' + this.editorID).value;
+      const alt = settingsDOM.querySelector('#alt-' + this.editorID).value;
+      let altText = alt;
+      let fileType = 'unknown';
+
+      // Set Range Again
+      if (sRange) {
+        selection.removeAllRanges();
+        selection.addRange(sRange);
+      }
+
+      if (files.length > 0) {
+        // File (DataURI)
+        const file = files[0];
+        fileType = file.type.split('/')[0];
+        if (fileType === 'image' || fileType === 'video') {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            altText = altText == '' ? file.name : altText;
+            processAndInsertMediaElement(fileType, event.target.result, altText);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else if (url !== '') {
+        // URL attachment
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const fileExt = filename.includes('.') ? filename.split('.').pop().toLowerCase() : '';
+
+        // Determine file type based on the file extension or URL
+        if (['jpg', 'jpeg', 'png', 'svg', 'webp', 'gif'].includes(fileExt)) {
+          fileType = 'image';
+        } else if (['mp4', 'webm', 'ogg', 'avi', 'mov'].includes(fileExt)) {
+          fileType = 'video';
+        } else if (this.isYouTubeURL(url)) {
+          fileType = 'youtube';
+        } else if (this.isVimeoURL(url)) {
+          fileType = 'vimeo';
+        }
+
+        altText = (altText !== '') ? altText : filename;
+        processAndInsertMediaElement(fileType, url, altText);
+      }
+    });
+
+    // Process and Insert Media Element
+    const processAndInsertMediaElement = (fileType, mediaItem, altText) => {
+      let mediaElement;
+      if (fileType === 'image') {
+        mediaElement = `<img src="${mediaItem}" alt="${altText}">`;
+      } else if (fileType === 'video') {
+        mediaElement = `<video src="${mediaItem}" controls></video>`;
+      } else if (fileType === 'youtube') {
+        mediaElement = this.getYouTubeEmbedCode(mediaItem);
+      } else if (fileType === 'vimeo') {
+        mediaElement = this.getVimeoEmbedCode(mediaItem);
+      } else {
+        mediaElement = false;
+      }
+
+      // Insert Media
+      if (mediaElement !== false) {
+        document.execCommand('insertHTML', false, `<br><div class="media-element align-left">${mediaElement}</div><br>`);
+        settingsDOM.classList.remove('active'); // Close PopUp
+      }
+    }
+
+    // Close popup
+    document.addEventListener('click', (e) => {
+      if (!parent.contains(e.target)) {
+        settingsDOM.classList.remove('active');
+      }
+    });
+  }
+
+  /**
+   * Is Youtube URL
+   * @param {string} url
+   * @return
+   */
+  isYouTubeURL(url) {
+    return (
+      url.includes('youtube.com/watch') ||
+      url.includes('youtu.be') ||
+      url.includes('youtube.com/embed')
+    );
+  }
+
+  /**
+   * Is Vimeo URL
+   * @param {string} url
+   * @returns
+   */
+  isVimeoURL(url) {
+    return (
+      url.includes('vimeo.com') ||
+      url.includes('player.vimeo.com/video')
+    );
+  }
+
+  /**
+   * Get Embed code (Youtube)
+   * @param {string} url
+   * @returns 
+   */
+  getYouTubeEmbedCode(url) {
+    const videoID = this.extractYouTubeVideoID(url);
+    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoID}" frameborder="0" allowfullscreen></iframe>`;
+  }
+
+  /**
+   * Extract Youtube video ID
+   * @param {string} url 
+   * @returns 
+   */
+  extractYouTubeVideoID(url) {
+    const regex = /(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : '';
+  }
+
+  /**
+   * Get Embed code (Vimeo)
+   * @param {string} url 
+   * @returns 
+   */
+  getVimeoEmbedCode(url) {
+    const videoID = this.extractVimeoVideoID(url);
+    return `<iframe src="https://player.vimeo.com/video/${videoID}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
+  }
+
+  /**
+   * Extract Vimeo video ID
+   * @param {string} url 
+   * @returns 
+   */
+  extractVimeoVideoID(url) {
+    const regex = /vimeo\.com\/(?:video\/)?(\d+)/;
+    const match = url.match(regex);
+    return match ? match[1] : '';
   }
 
   /**
