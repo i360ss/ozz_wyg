@@ -10,10 +10,19 @@
 
   <div class="wysiwyg-editor" data-ozz-wyg></div>
 
+  <button id="submit">Submit</button>
+
+  <div class="render"></div>
+
   <script src="OzzWyg.js" ></script>
   <script>
-    new OzzWyg({
+    const editor = new OzzWyg({
       selector: '.wysiwyg-editor',
+    });
+
+    document.getElementById('submit').addEventListener('click', () => {
+      document.querySelector('.render').innerHTML = editor.getValue();
+      console.log(editor.getValue());
     });
   </script>
 </body>

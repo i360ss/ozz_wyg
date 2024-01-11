@@ -947,6 +947,13 @@ class OzzWyg {
       this.playGround.textContent = this.playGround.innerHTML;
     }
   }
+
+  /**
+   * Get value from editor
+   */
+  getValue() {
+    return this.playGround.innerHTML;
+  }
 }
 
 // Default options for the plugin
