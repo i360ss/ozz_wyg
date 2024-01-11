@@ -1,4 +1,5 @@
 .ozz-wyg {
+  all: unset;
   font-family: sans-serif;
 }
 .ozz-wyg__toolbar {
@@ -49,7 +50,7 @@
 .ozz-wyg__tool:not(.ozz-wyg__tool--headings) button:not(.ozz-wyg-regular-btn) {
   font-size: 0;
   line-height: 1.7rem;
-  background-image: url("./tools.svg");
+  background-image: url(".//tools.svg");
   background-repeat: no-repeat;
 }
 .ozz-wyg__tool:not(.ozz-wyg__tool--headings) button[data-action=bold] {
@@ -187,15 +188,22 @@
   left: 0;
   gap: 3px;
   align-items: center;
+  margin-left: 10px;
 }
 .ozz-wyg__tool .ozz-wyg__tool-table-setting .sub-options span {
   display: flex;
   flex-direction: row;
+  align-items: end;
+  gap: 10px;
 }
 .ozz-wyg__tool .ozz-wyg__tool-table-setting input {
   width: 45px;
   padding: 8px 5px;
   display: inline-block;
+}
+.ozz-wyg__tool .ozz-wyg__tool-table-setting input[type=checkbox], .ozz-wyg__tool .ozz-wyg__tool-table-setting input[type=radio] {
+  width: 18px;
+  height: 18px;
 }
 .ozz-wyg__tool--headings .ozz-wyg__tool-headings-trigger > button {
   width: 120px;
@@ -473,7 +481,7 @@
   outline: none;
   font-size: 0;
   line-height: 1.7rem;
-  background-image: url("./tools.svg");
+  background-image: url(".//tools.svg");
   background-repeat: no-repeat;
 }
 .ozz-wyg__editor-area .ozz-wyg-popover .ozz-wyg-editlink {
@@ -504,7 +512,7 @@
   cursor: pointer;
   font-size: 0;
   line-height: 1.7rem;
-  background-image: url("./tools.svg");
+  background-image: url(".//tools.svg");
   background-repeat: no-repeat;
 }
 .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__row button:hover, .ozz-wyg__editor-area .ozz-wyg-table-wrapper .ozz-wyg-table-actions__column button:hover {
@@ -545,7 +553,7 @@
 .ozz-wyg__editor-area .ozz-wyg-media-actions button {
   font-size: 0;
   line-height: 1.7rem;
-  background-image: url("./tools.svg");
+  background-image: url(".//tools.svg");
   background-repeat: no-repeat;
   width: 27px;
   height: 27px;
@@ -569,6 +577,7 @@
 .ozz-wyg__editor-area .ozz-wyg-media-actions select {
   height: 27px;
   width: 60px;
+  padding: 3px;
   border: 1px solid #ddd;
 }
 .ozz-wyg__editor-area .ozz-wyg-media-actions button,

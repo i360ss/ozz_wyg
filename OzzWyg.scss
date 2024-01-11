@@ -9,14 +9,17 @@ $dark-3: #424247;
 
 $fs-1: 14px;
 
+$icon_dir: './';
+
 @mixin ozz-wyg-icon-btn {
   font-size: 0;
   line-height: 1.7rem;
-  background-image: url('./tools.svg');
+  background-image: url('#{$icon_dir}/tools.svg');
   background-repeat: no-repeat;
 }
 
 .ozz-wyg {
+  all: unset;
   font-family: sans-serif;
   &__toolbar {
     position: sticky;
@@ -195,15 +198,23 @@ $fs-1: 14px;
         left: 0;
         gap: 3px;
         align-items: center;
+        margin-left: 10px;
         span {
           display: flex;
           flex-direction: row;
+          align-items: end;
+          gap: 10px;
         }
       }
       input {
         width: 45px;
         padding: 8px 5px;
         display: inline-block;
+        &[type="checkbox"],
+        &[type="radio"] {
+          width: 18px;
+          height: 18px;
+        }
       }
     }
     // Headings Tool
@@ -522,6 +533,7 @@ $fs-1: 14px;
       select {
         height: 27px;
         width: 60px;
+        padding: 3px;
         border: 1px solid $light-3;
       }
       button,

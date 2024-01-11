@@ -15,121 +15,121 @@ class OzzWyg {
     this.tools = {
       'headings': {
         name: 'Headings',
-        dom: '<div class="ozz-wyg__tool-headings-trigger"><button>Headings</button><div class="ozz-wyg__tool-headings-setting"></div></div>',
+        dom: '<div class="ozz-wyg__tool-headings-trigger"><button type="button">Headings</button><div class="ozz-wyg__tool-headings-setting"></div></div>',
         child: {
           'h1': {
             name: 'Heading 1',
-            dom: '<button data-action="formatBlock" data-value="h1">Heading 1</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h1">Heading 1</button>'
           },
           'h2': {
             name: 'Heading 2',
-            dom: '<button data-action="formatBlock" data-value="h2">Heading 2</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h2">Heading 2</button>'
           },
           'h3': {
             name: 'Heading 3',
-            dom: '<button data-action="formatBlock" data-value="h3">Heading 3</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h3">Heading 3</button>'
           },
           'h4': {
             name: 'Heading 4',
-            dom: '<button data-action="formatBlock" data-value="h4">Heading 4</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h4">Heading 4</button>'
           },
           'h5': {
             name: 'Heading 5',
-            dom: '<button data-action="formatBlock" data-value="h5">Heading 5</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h5">Heading 5</button>'
           },
           'h6': {
             name: 'Heading 6',
-            dom: '<button data-action="formatBlock" data-value="h6">Heading 6</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="h6">Heading 6</button>'
           },
           'paragraph': {
             name: 'Paragraph',
-            dom: '<button data-action="formatBlock" data-value="P">Normal Text</button>'
+            dom: '<button type="button" data-action="formatBlock" data-value="P">Normal Text</button>'
           },
           'quote': {
             name: 'Quote',
-            dom: '<button data-action="quote">Quote</button>'
+            dom: '<button type="button" data-action="quote">Quote</button>'
           },
           'code': {
             name: 'Code',
-            dom: '<button data-action="code">Code</button>'
+            dom: '<button type="button" data-action="code">Code</button>'
           },
         }
       },
       'bold': {
         name: 'Bold',
-        dom: '<button data-action="bold">Bold</button>'
+        dom: '<button type="button" data-action="bold">Bold</button>'
       },
       'italic': {
         name: 'Italic',
-        dom: '<button data-action="italic">Italic</button>'
+        dom: '<button type="button" data-action="italic">Italic</button>'
       },
       'underline': {
         name: 'Underline',
-        dom: '<button data-action="underline">Underline</button>',
+        dom: '<button type="button" data-action="underline">Underline</button>',
         child: {
           'strikethrough': {
             name: 'Strikethrough',
-            dom: '<button data-action="strikethrough">Strikethrough</button>',
+            dom: '<button type="button" data-action="strikethrough">Strikethrough</button>',
           },
           'subscript': {
             name: 'Subscript',
-            dom: '<button data-action="subscript">Subscript</button>',
+            dom: '<button type="button" data-action="subscript">Subscript</button>',
           },
           'superscript': {
             name: 'Superscript',
-            dom: '<button data-action="superscript">Superscript</button>',
+            dom: '<button type="button" data-action="superscript">Superscript</button>',
           },
         }
       },
       'link': {
         name: 'Link',
-        dom: '<div class="ozz-wyg__tool-link-trigger"><button data-action="link">Link</button><div class="ozz-wyg__tool-link-setting"></div></div>'
+        dom: '<div class="ozz-wyg__tool-link-trigger"><button type="button" data-action="link">Link</button><div class="ozz-wyg__tool-link-setting"></div></div>'
       },
       'table': {
         name: 'Table',
-        dom: '<div class="ozz-wyg__tool-table-trigger"><button data-action="table">Table</button><div class="ozz-wyg__tool-table-setting"></div></div>'
+        dom: '<div class="ozz-wyg__tool-table-trigger"><button type="button" data-action="table">Table</button><div class="ozz-wyg__tool-table-setting"></div></div>'
       },
       'ol': {
         name: 'Ordered List',
-        dom: '<button data-action="insertOrderedList">Ordered List</button>'
+        dom: '<button type="button" data-action="insertOrderedList">Ordered List</button>'
       },
       'ul': {
         name: 'Un-ordered List',
-        dom: '<button data-action="insertUnorderedList">Un-ordered List</button>'
+        dom: '<button type="button" data-action="insertUnorderedList">Un-ordered List</button>'
       },
       'alignLeft': {
         name: 'Align Left',
-        dom: '<button data-action="justifyLeft">Align Left</button>',
+        dom: '<button type="button" data-action="justifyLeft">Align Left</button>',
         child: {
           'alignRight': {
             name: 'Align Right',
-            dom: '<button data-action="justifyRight">Align Right</button>'
+            dom: '<button type="button" data-action="justifyRight">Align Right</button>'
           },
           'alignCenter': {
             name: 'Align Center',
-            dom: '<button data-action="justifyCenter">Align Center</button>'
+            dom: '<button type="button" data-action="justifyCenter">Align Center</button>'
           },
           'justify': {
             name: 'Justify',
-            dom: '<button data-action="justifyFull">Justify</button>'
+            dom: '<button type="button" data-action="justifyFull">Justify</button>'
           },
           'indentIncrease': {
             name: 'Indent Increase',
-            dom: '<button data-action="indent">Indent Increase</button>'
+            dom: '<button type="button" data-action="indent">Indent Increase</button>'
           },
           'indentDecrease': {
             name: 'Indent Decrease',
-            dom: '<button data-action="outdent">Indent Decrease</button>'
+            dom: '<button type="button" data-action="outdent">Indent Decrease</button>'
           },
         }
       },
       'media': {
         name: 'Media',
-        dom: '<div class="ozz-wyg__tool-media-trigger"><button data-action="media">Media</button><div class="ozz-wyg__tool-media-setting"></div></div>'
+        dom: '<div class="ozz-wyg__tool-media-trigger"><button type="button" data-action="media">Media</button><div class="ozz-wyg__tool-media-setting"></div></div>'
       },
       'codeView': {
         name: 'Code View',
-        dom: '<button data-action="codeView">Code View</button>'
+        dom: '<button type="button" data-action="codeView">Code View</button>'
       }
     };
 
@@ -308,9 +308,9 @@ class OzzWyg {
       existingTarget = existingAnchor ? existingAnchor.target : '';
 
     settingsDOM.innerHTML = `
-      <label>URL:</label> <input type="text" id="url-${this.editorID}" value="${existingURL}"><br>
-      <label>Target:</label> <input type="text" id="target-${this.editorID}" value="${existingTarget ? existingTarget : '_blank'}"><br>
-      <button class="ozz-wyg-regular-btn" id="insertLinkTrigger-${this.editorID}">${existingAnchor ? 'Update' : 'Insert'}</button>`;
+      <label>URL:</label> <input form="" type="text" id="url-${this.editorID}" value="${existingURL}"><br>
+      <label>Target:</label> <input form="" type="text" id="target-${this.editorID}" value="${existingTarget ? existingTarget : '_blank'}"><br>
+      <button type="button" class="ozz-wyg-regular-btn" id="insertLinkTrigger-${this.editorID}">${existingAnchor ? 'Update' : 'Insert'}</button>`;
     settingsDOM.classList.toggle('active');
 
     // Insert or update link
@@ -358,8 +358,8 @@ class OzzWyg {
           popoverDOM.classList.add('ozz-wyg-popover');
           popoverDOM.innerHTML = `
           <a href="${anchor.href}" role="popover" target="_blank">${anchor.href}</a>
-          <button class="ozz-wyg-editlink"></button>
-          <button class="ozz-wyg-unlink"></button>`;
+          <button type="button" class="ozz-wyg-editlink"></button>
+          <button type="button" class="ozz-wyg-unlink"></button>`;
 
           if (this.editor.querySelectorAll('.ozz-wyg-popover').length === 0) {
             anchor.insertAdjacentElement('afterend', popoverDOM);
@@ -419,19 +419,19 @@ class OzzWyg {
     }
 
     settingsDOM.innerHTML = `
-      <input type="number" min="1" max="100" value="2" placeholder="X" id="row-${this.editorID}">
-      <input type="number" min="1" max="100" value="2" placeholder="Y" id="column-${this.editorID}">
+      <input form="" type="number" min="1" max="100" value="2" placeholder="X" id="row-${this.editorID}">
+      <input form="" type="number" min="1" max="100" value="2" placeholder="Y" id="column-${this.editorID}">
       <span class="sub-options">
         <span>
-          <input type="checkbox" id="has-th-${this.editorID}">
+          <input form="" type="checkbox" id="has-th-${this.editorID}">
           <label for="has-th-${this.editorID}"">No Header</label>
         </span>
         <span>
-          <input type="checkbox" id="has-footer-${this.editorID}">
+          <input form="" type="checkbox" id="has-footer-${this.editorID}">
           <label for="has-footer-${this.editorID}">No Footer</label>
         </span>
       </span>
-      <button class="ozz-wyg-regular-btn" id="insertTableTrigger-${this.editorID}">Insert</button>`;
+      <button type="button" class="ozz-wyg-regular-btn" id="insertTableTrigger-${this.editorID}">Insert</button>`;
     settingsDOM.classList.toggle('active');
 
     // Insert or update Table
@@ -510,12 +510,12 @@ class OzzWyg {
           actions.classList.add('ozz-wyg-table-actions');
           actions.innerHTML = `
           <span class="ozz-wyg-table-actions__row">
-            <button title="Add Row" data-tbl-action="addrow">Add Row</button>
-            <button title="Remove Row" data-tbl-action="deleterow">Delete Row</button>
+            <button type="button" title="Add Row" data-tbl-action="addrow">Add Row</button>
+            <button type="button" title="Remove Row" data-tbl-action="deleterow">Delete Row</button>
           </span>
           <span class="ozz-wyg-table-actions__column">
-            <button title="Add Column" data-tbl-action="addcol">Add Column</button>
-            <button title="Remove Column" data-tbl-action="deletecol">Delete Column</button>
+            <button type="button" title="Add Column" data-tbl-action="addcol">Add Column</button>
+            <button type="button" title="Remove Column" data-tbl-action="deletecol">Delete Column</button>
           </span>`;
 
           // Perform Table Actions
@@ -666,10 +666,10 @@ class OzzWyg {
     let existingALT = '';
 
     settingsDOM.innerHTML = `
-      <label>Upload:</label> <input type="file" accept="image/*,video/*" id="file-${this.editorID}" value="${existingURL}"><br>
-      <label>Media URL:</label> <input type="text" id="url-${this.editorID}" value="${existingURL}"><br>
-      <label>Alt:</label> <input type="text" id="alt-${this.editorID}" value="${existingALT}"><br>
-      <button class="ozz-wyg-regular-btn" id="insertMediaTrigger-${this.editorID}">${existingURL ? 'Update' : 'Insert'}</button>`;
+      <label>Upload:</label> <input form="" type="file" accept="image/*,video/*" id="file-${this.editorID}" value="${existingURL}"><br>
+      <label>Media URL:</label> <input form="" type="text" id="url-${this.editorID}" value="${existingURL}"><br>
+      <label>Alt:</label> <input form="" type="text" id="alt-${this.editorID}" value="${existingALT}"><br>
+      <button type="button" class="ozz-wyg-regular-btn" id="insertMediaTrigger-${this.editorID}">${existingURL ? 'Update' : 'Insert'}</button>`;
     settingsDOM.classList.toggle('active');
 
     // Insert Media
@@ -777,12 +777,12 @@ class OzzWyg {
           }
         }
         popoverDOM.innerHTML = `
-          <button title="Align Left" data-media-action="align-left">Align Left</button>
-          <button title="Align Center" data-media-action="align-center">Align Center</button>
-          <button title="Align Right" data-media-action="align-right">Align Right</button>
-          <button title="Inline" data-media-action="inline">Inline</button>
-          <select data-media-action="width">${options}</select>
-          <button title="Delete" data-media-action="delete">Delete</button>
+          <button type="button" title="Align Left" data-media-action="align-left">Align Left</button>
+          <button type="button" title="Align Center" data-media-action="align-center">Align Center</button>
+          <button type="button" title="Align Right" data-media-action="align-right">Align Right</button>
+          <button type="button" title="Inline" data-media-action="inline">Inline</button>
+          <select form="" data-media-action="width">${options}</select>
+          <button type="button" title="Delete" data-media-action="delete">Delete</button>
         `;
 
         if (this.editor.querySelectorAll('.ozz-wyg-media-actions').length === 0) {
