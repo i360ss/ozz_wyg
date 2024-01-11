@@ -19,7 +19,8 @@ $fs-1: 14px;
 .ozz-wyg {
   font-family: sans-serif;
   &__toolbar {
-    position: relative;
+    position: sticky;
+    top: 0;
     padding: 3px;
     border: 1px solid $light-3;
     border-bottom-color: transparent;

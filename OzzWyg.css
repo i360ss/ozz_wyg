@@ -2,7 +2,8 @@
   font-family: sans-serif;
 }
 .ozz-wyg__toolbar {
-  position: relative;
+  position: sticky;
+  top: 0;
   padding: 3px;
   border: 1px solid #ddd;
   border-bottom-color: transparent;
