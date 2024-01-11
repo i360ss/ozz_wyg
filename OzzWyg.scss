@@ -9,6 +9,13 @@ $dark-3: #424247;
 
 $fs-1: 14px;
 
+@mixin ozz-wyg-icon-btn {
+  font-size: 0;
+  line-height: 1.7rem;
+  background-image: url('./tools.svg');
+  background-repeat: no-repeat;
+}
+
 .ozz-wyg {
   font-family: sans-serif;
   &__toolbar {
@@ -57,10 +64,7 @@ $fs-1: 14px;
     &:not(.ozz-wyg__tool--headings) {
       button {
         &:not(.ozz-wyg-regular-btn) {
-          font-size: 0;
-          line-height: 1.7rem;
-          background-image: url('./tools.svg');
-          background-repeat: no-repeat;
+          @include ozz-wyg-icon-btn();
         }
         &[data-action="bold"] {
           background-position: 3px 3px;
@@ -268,6 +272,7 @@ $fs-1: 14px;
     border-radius: 0 0 5px 5px;
     outline: none;
     background-color: #fff;
+    margin: 0;
     &.ozz-wyg-html-view {
       font-family: monospace;
       background: $dark-2;
@@ -293,21 +298,24 @@ $fs-1: 14px;
       }
     }
     // Media Element
-    .media-element {
-      width: 100%;
+    .media-wrapper,
+    img {
+      display: block;
+      max-width: 100%;
+      margin: 5px;
       &.align-left {
-        text-align: left;
+        margin-right: auto;
       }
       &.align-center {
-        text-align: center;
+        margin: 5px auto;
       }
       &.align-right {
-        text-align: right;
+        margin-left: auto;
       }
-    }
-    img,
-    video {
-      max-width: 100%;
+      &.inline {
+        display: inline-block;
+        vertical-align: bottom;
+      }
       &.w {
         &-5 { width: 5%; }
         &-10 { width: 10%; }
@@ -329,6 +337,37 @@ $fs-1: 14px;
         &-90 { width: 90%; }
         &-95 { width: 95%; }
         &-100 { width: 100%; }
+      }
+    }
+    .media-wrapper {
+      position: relative;
+      min-width: 260px;
+      width: max-content;
+      margin-top: 35px !important;
+      &:before {
+        content: '';
+        position: absolute;
+        top: -25px;
+        left: 0;
+        width: calc(100% - 2px);
+        height: 25px;
+        background: $light-3;
+        border-radius: 5px 5px 0 0;
+        border: 1px solid $light-4;
+      }
+      .height-holder {
+        padding-top: 56.25%;
+        display: block;
+      }
+      iframe {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      video {
+        width: 100%;
       }
     }
     code {
@@ -384,12 +423,9 @@ $fs-1: 14px;
         border-radius: 3px;
         width: 27px;
         height: 27px;
-        font-size: 0;
-        line-height: 1.7rem;
-        background-image: url('./tools.svg');
-        background-repeat: no-repeat;
         border: 1px solid $light-3;
         outline: none;
+        @include ozz-wyg-icon-btn();
       }
       .ozz-wyg-editlink {
         right: 32px;
@@ -412,16 +448,14 @@ $fs-1: 14px;
           position: absolute;
           display: flex;
           button {
-            font-size: 0;
             width: 24px;
             height: 24px;
             padding: 6px;
             line-height: 0.5rem;
             border: 1px solid $light-4;
             background-color: $light-2;
-            background-image: url('./tools.svg');
-            background-repeat: no-repeat;
             cursor: pointer;
+            @include ozz-wyg-icon-btn();
             &:hover {
               background-color: $light-3;
             }
@@ -453,6 +487,48 @@ $fs-1: 14px;
             border-radius: 0 3px 3px 0;
           }
         }
+      }
+    }
+    // Media Element Actions
+    .ozz-wyg-media-actions {
+      position: fixed;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: $light-2;
+      padding: 3px;
+      border-radius: 5px;
+      button {
+        @include ozz-wyg-icon-btn();
+        width: 27px;
+        height: 27px;
+        border: 1px solid $light-3;
+        &[data-media-action="align-left"] {
+          background-position: -791px 0;
+        }
+        &[data-media-action="align-center"] {
+          background-position: -467px 0;
+        }
+        &[data-media-action="align-right"] {
+          background-position: -432px 0;
+        }
+        &[data-media-action="delete"] {
+          background-position: -827px 1px;
+        }
+        &[data-media-action="inline"] {
+          background-position: -575px 1px;
+        }
+      }
+      select {
+        height: 27px;
+        width: 60px;
+        border: 1px solid $light-3;
+      }
+      button,
+      select {
+        margin: 0 !important;
+        line-height: 0 !important;
+        border-radius: 3px;
+        vertical-align: middle;
       }
     }
   }

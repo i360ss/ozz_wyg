@@ -170,7 +170,7 @@ class OzzWyg {
           table.outerHTML = tableWrapped.outerHTML;
         }
 
-        // Cleat inline styles
+        // Clear inline styles
         table.removeAttribute('style');
         const tItems = table.querySelectorAll('tbody, thead, tfoot, tr, td, th');
         tItems.forEach(item => {
@@ -375,12 +375,13 @@ class OzzWyg {
             popoverDOM.style.left = `${e.clientX - rx}px`;
           }
 
-          const removePopoverEv = document.addEventListener('click', (ev) => {
+          const removePopoverEv = (ev) => {
             if (!anchor.contains(ev.target) && !popoverDOM.contains(ev.target)) {
               popoverDOM.remove();
-              removeEventListener('click', removePopoverEv);
+              document.removeEventListener('click', removePopoverEv);
             }
-          });
+          };
+          document.addEventListener('click', removePopoverEv);
 
           // Unlink
           popoverDOM.querySelector('.ozz-wyg-unlink').addEventListener('click', (ev) => {
@@ -388,7 +389,7 @@ class OzzWyg {
             const textNode = document.createTextNode(anchor.textContent);
             anchor.parentNode.replaceChild(textNode, anchor);
             popoverDOM.remove();
-            removeEventListener('click', removePopoverEv);
+            document.removeEventListener('click', removePopoverEv);
           });
 
           // Edit this link
@@ -587,9 +588,9 @@ class OzzWyg {
     const tbody = table_wrap.querySelector('tbody');
     const tfoot = table_wrap.querySelector('tfoot');
 
-    const addCellToRows = (rows, newCellIndex) => {
+    const addCellToRows = (rows, newCellIndex, type='td') => {
       rows.forEach((row) => {
-        const td = document.createElement('td');
+        const td = document.createElement(type);
         td.innerHTML = '<br>';
         row.insertBefore(td, row.cells[newCellIndex]);
       });
@@ -598,7 +599,7 @@ class OzzWyg {
     if (thead) {
       const headerRows = thead.querySelectorAll('tr');
       const newCellIndex = headerRows[0]?.querySelectorAll('th, td')?.length ?? 0;
-      addCellToRows(headerRows, newCellIndex);
+      addCellToRows(headerRows, newCellIndex, 'th');
     }
 
     if (tbody) {
@@ -724,21 +725,23 @@ class OzzWyg {
     const processAndInsertMediaElement = (fileType, mediaItem, altText) => {
       let mediaElement;
       if (fileType === 'image') {
-        mediaElement = `<img src="${mediaItem}" alt="${altText}">`;
+        mediaElement = `<img src="${mediaItem}" class="align-center" alt="${altText}">`;
       } else if (fileType === 'video') {
-        mediaElement = `<video src="${mediaItem}" controls></video>`;
+        mediaElement = `<br><div class="media-wrapper"><video src="${mediaItem}" controls></video></div><br>`;
       } else if (fileType === 'youtube') {
-        mediaElement = this.getYouTubeEmbedCode(mediaItem);
+        mediaElement = `<br>${this.getYouTubeEmbedCode(mediaItem)}<br>`;
       } else if (fileType === 'vimeo') {
-        mediaElement = this.getVimeoEmbedCode(mediaItem);
+        mediaElement = `<br>${this.getVimeoEmbedCode(mediaItem)}<br>`;
       } else {
         mediaElement = false;
       }
 
       // Insert Media
       if (mediaElement !== false) {
-        document.execCommand('insertHTML', false, `<br><div class="media-element align-left">${mediaElement}</div><br>`);
+        document.execCommand('insertHTML', false, `<br>${mediaElement}<br>`);
         settingsDOM.classList.remove('active'); // Close PopUp
+
+        this.mediaPopover(); // Config Media Popover
       }
     }
 
@@ -747,6 +750,84 @@ class OzzWyg {
       if (!parent.contains(e.target)) {
         settingsDOM.classList.remove('active');
       }
+    });
+  }
+
+  /**
+   * Media Popover
+   */
+  mediaPopover() {
+    const mediaItems = this.editor.querySelectorAll('img, .media-wrapper');
+    mediaItems.forEach(mediaItem => {
+      mediaItem.addEventListener('click', (e) => {
+        const popoverDOM = document.createElement('div');
+        popoverDOM.setAttribute('contenteditable', false);
+        popoverDOM.classList.add('ozz-wyg-media-actions');
+
+        // Set Selected Width
+        const regex = /^w-\d+/;
+        const widthClass = Array.from(mediaItem.classList).find(className => regex.test(className));
+        let options = '<option value="auto">Auto</option>';
+        for (let i = 1; i < 21; i++) {
+          const clsName = 'w-'+i * 5;
+          if (clsName == widthClass) {
+            options += `<option selected value="${clsName}">${i * 5}%</option>`;
+          } else {
+            options += `<option value="${clsName}">${i * 5}%</option>`;
+          }
+        }
+        popoverDOM.innerHTML = `
+          <button title="Align Left" data-media-action="align-left">Align Left</button>
+          <button title="Align Center" data-media-action="align-center">Align Center</button>
+          <button title="Align Right" data-media-action="align-right">Align Right</button>
+          <button title="Inline" data-media-action="inline">Inline</button>
+          <select data-media-action="width">${options}</select>
+          <button title="Delete" data-media-action="delete">Delete</button>
+        `;
+
+        if (this.editor.querySelectorAll('.ozz-wyg-media-actions').length === 0) {
+          mediaItem.insertAdjacentElement('afterend', popoverDOM);
+
+          // Position popover element
+          popoverDOM.style.top = `${e.clientY}px`;
+          popoverDOM.style.left = `${e.clientX}px`;
+
+          // Media Actions
+          popoverDOM.querySelectorAll('button, select').forEach(actionTrigger => {
+            if (actionTrigger.tagName === 'SELECT') {
+              actionTrigger.addEventListener('change', () => {
+                const action = actionTrigger.value;
+                mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('w-')));
+                if (action !== 'auto') {
+                  mediaItem.classList.add(action);
+                }
+              });
+            } else {
+              actionTrigger.addEventListener('click', () => {
+                const action = actionTrigger.getAttribute('data-media-action');
+                if (action == 'align-left' || action == 'align-right' || action == 'align-center') {
+                  mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('align-')));
+                  mediaItem.classList.add(action);
+                } else if (action == 'inline') {
+                  mediaItem.classList.toggle(action);
+                } else if (action == 'delete') {
+                  mediaItem.remove();
+                  popoverDOM.remove();
+                }
+              });
+            }
+          });
+        }
+
+        // Close popover
+        const tempCloseEvent = (ev) => {
+          if (!popoverDOM.contains(ev.target) && ev.target !== popoverDOM && ev.target !== mediaItem) {
+            this.editor.querySelector('.ozz-wyg-media-actions')?.remove();
+            document.removeEventListener('click', tempCloseEvent);
+          }
+        };
+        document.addEventListener('click', tempCloseEvent);
+      });
     });
   }
 
@@ -782,7 +863,7 @@ class OzzWyg {
    */
   getYouTubeEmbedCode(url) {
     const videoID = this.extractYouTubeVideoID(url);
-    return `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoID}" frameborder="0" allowfullscreen></iframe>`;
+    return `<div class="media-wrapper"><span class="height-holder"></span><iframe src="https://www.youtube.com/embed/${videoID}" frameborder="0" allowfullscreen></iframe><div>`;
   }
 
   /**
@@ -803,7 +884,7 @@ class OzzWyg {
    */
   getVimeoEmbedCode(url) {
     const videoID = this.extractVimeoVideoID(url);
-    return `<iframe src="https://player.vimeo.com/video/${videoID}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
+    return `<div class="media-wrapper"><span class="height-holder"></span><iframe src="https://player.vimeo.com/video/${videoID}" frameborder="0" allowfullscreen></iframe></div>`;
   }
 
   /**
@@ -857,6 +938,7 @@ class OzzWyg {
       this.playGround.classList.remove('ozz-wyg-html-view');
       this.playGround.innerHTML = this.playGround.textContent;
       this.tableActions(); // Init table Actions
+      this.mediaPopover(); // Config Media Popover
     } else {
       this.playGround.querySelectorAll('[contenteditable="false"]').forEach(element => {
         element.remove();
