@@ -7,6 +7,9 @@
  */
 
 class OzzWyg {
+  // Static registry to track all editor instances
+  static instances = new Map();
+
   constructor(options) {
     this.options = { ...OzzWyg.defaults, ...options };
     const editorElements = document.querySelectorAll(this.options.selector);
@@ -143,7 +146,8 @@ class OzzWyg {
         const instance = {
           id: editorID,
           element: editor,
-          playGround: null
+          playGround: null,
+          ozzWygInstance: this
         };
         this.editorInstances.set(editorID, instance);
         this.currentEditorID = editorID;
@@ -151,6 +155,10 @@ class OzzWyg {
         this.editorID = editorID;
         this.initEditor();
         instance.playGround = this.playGround;
+        
+        // Register instance in static registry
+        OzzWyg.instances.set(editor, this);
+        OzzWyg.instances.set(editorID, this);
       });
     }
   }
@@ -1591,7 +1599,132 @@ class OzzWyg {
     }
     return this.playGround ? this.playGround.innerHTML : '';
   }
+
+  /**
+   * Get editor instance by editor ID
+   * @param {string} editorID - Editor ID
+   * @returns {Object|null} Editor instance or null
+   */
+  getEditorInstance(editorID) {
+    return this.editorInstances.get(editorID) || null;
+  }
+
+  /**
+   * Get all editor instances
+   * @returns {Map} Map of all editor instances
+   */
+  getAllEditorInstances() {
+    return this.editorInstances;
+  }
+
+  /**
+   * Bind event to specific editor instance
+   * @param {string} editorID - Editor ID
+   * @param {string} eventName - Event name (without 'ozzwyg:' prefix)
+   * @param {Function} callback - Event callback function
+   */
+  on(editorID, eventName, callback) {
+    const instance = this.getEditorInstance(editorID);
+    if (instance && instance.element) {
+      instance.element.addEventListener(`ozzwyg:${eventName}`, callback);
+    }
+  }
+
+  /**
+   * Unbind event from specific editor instance
+   * @param {string} editorID - Editor ID
+   * @param {string} eventName - Event name (without 'ozzwyg:' prefix)
+   * @param {Function} callback - Event callback function
+   */
+  off(editorID, eventName, callback) {
+    const instance = this.getEditorInstance(editorID);
+    if (instance && instance.element) {
+      instance.element.removeEventListener(`ozzwyg:${eventName}`, callback);
+    }
+  }
 }
+
+/**
+ * Static method to get OzzWyg instance from DOM element
+ * @param {string|HTMLElement} selector - CSS selector or DOM element
+ * @returns {OzzWyg|null} OzzWyg instance or null
+ */
+OzzWyg.getInstance = function(selector) {
+  let element = null;
+  if (typeof selector === 'string') {
+    element = document.querySelector(selector);
+  } else if (selector instanceof HTMLElement) {
+    element = selector;
+  }
+  
+  if (element) {
+    // Check if element has data-editor attribute
+    const editorID = element.getAttribute('data-editor');
+    if (editorID && OzzWyg.instances.has(editorID)) {
+      return OzzWyg.instances.get(editorID);
+    }
+    // Check if element itself is registered
+    if (OzzWyg.instances.has(element)) {
+      return OzzWyg.instances.get(element);
+    }
+  }
+  return null;
+};
+
+/**
+ * Static method to get value from editor by selector
+ * @param {string|HTMLElement} selector - CSS selector or DOM element
+ * @returns {string} Editor content or empty string
+ */
+OzzWyg.getValue = function(selector) {
+  const instance = OzzWyg.getInstance(selector);
+  if (instance) {
+    const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    const editorID = element ? element.getAttribute('data-editor') : null;
+    return instance.getValue(editorID);
+  }
+  return '';
+};
+
+/**
+ * Static method to bind event to editor by selector
+ * @param {string|HTMLElement} selector - CSS selector or DOM element
+ * @param {string} eventName - Event name (without 'ozzwyg:' prefix)
+ * @param {Function} callback - Event callback function
+ */
+OzzWyg.on = function(selector, eventName, callback) {
+  const instance = OzzWyg.getInstance(selector);
+  if (instance) {
+    const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    const editorID = element ? element.getAttribute('data-editor') : null;
+    if (editorID) {
+      instance.on(editorID, eventName, callback);
+    } else if (element) {
+      // Fallback: bind directly to element
+      element.addEventListener(`ozzwyg:${eventName}`, callback);
+    }
+  }
+};
+
+/**
+ * Static method to unbind event from editor by selector
+ * @param {string|HTMLElement} selector - CSS selector or DOM element
+ * @param {string} eventName - Event name (without 'ozzwyg:' prefix)
+ * @param {Function} callback - Event callback function
+ */
+OzzWyg.off = function(selector, eventName, callback) {
+  const instance = OzzWyg.getInstance(selector);
+  if (instance) {
+    const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    const editorID = element ? element.getAttribute('data-editor') : null;
+    if (editorID) {
+      instance.off(editorID, eventName, callback);
+    } else if (element) {
+      // Fallback: unbind directly from element
+      element.removeEventListener(`ozzwyg:${eventName}`, callback);
+    }
+  }
+};
 
 // Default options for the plugin
 OzzWyg.defaults = {

@@ -182,7 +182,7 @@ const editor = new OzzWyg({
 
 ## API Reference
 
-### Methods
+### Instance Methods
 
 #### `getValue(editorID)`
 
@@ -202,6 +202,153 @@ const content = editor.getValue();
 const content = editor.getValue('i-abc123');
 ```
 
+#### `getEditorInstance(editorID)`
+
+Get editor instance object by editor ID.
+
+**Parameters:**
+- `editorID` (string) - Editor ID
+
+**Returns:** Object with `id`, `element`, `playGround`, `ozzWygInstance` or `null`
+
+**Example:**
+```javascript
+const instance = editor.getEditorInstance('i-abc123');
+console.log(instance.element); // Editor DOM element
+console.log(instance.playGround); // Editable area element
+```
+
+#### `getAllEditorInstances()`
+
+Get all editor instances managed by this OzzWyg instance.
+
+**Returns:** Map of all editor instances
+
+**Example:**
+```javascript
+const instances = editor.getAllEditorInstances();
+instances.forEach((instance, editorID) => {
+  console.log(`Editor ${editorID}:`, instance);
+});
+```
+
+#### `on(editorID, eventName, callback)`
+
+Bind event to specific editor instance.
+
+**Parameters:**
+- `editorID` (string) - Editor ID
+- `eventName` (string) - Event name without 'ozzwyg:' prefix (e.g., 'input', 'focus')
+- `callback` (Function) - Event callback function
+
+**Example:**
+```javascript
+editor.on('i-abc123', 'input', (e) => {
+  console.log('Content changed:', e.detail.content);
+});
+```
+
+#### `off(editorID, eventName, callback)`
+
+Unbind event from specific editor instance.
+
+**Parameters:**
+- `editorID` (string) - Editor ID
+- `eventName` (string) - Event name without 'ozzwyg:' prefix
+- `callback` (Function) - Event callback function (must be same reference as used in `on`)
+
+**Example:**
+```javascript
+const handler = (e) => console.log('Input:', e.detail);
+editor.on('i-abc123', 'input', handler);
+// Later...
+editor.off('i-abc123', 'input', handler);
+```
+
+### Static Methods
+
+#### `OzzWyg.getInstance(selector)`
+
+Get OzzWyg instance from DOM element or selector. Useful when you don't have direct reference to the editor instance.
+
+**Parameters:**
+- `selector` (string|HTMLElement) - CSS selector or DOM element
+
+**Returns:** OzzWyg instance or `null`
+
+**Example:**
+```javascript
+// Get instance by selector
+const instance = OzzWyg.getInstance('.my-editor');
+
+// Get instance by element
+const element = document.querySelector('.my-editor');
+const instance = OzzWyg.getInstance(element);
+
+if (instance) {
+  const content = instance.getValue();
+}
+```
+
+#### `OzzWyg.getValue(selector)`
+
+Get value from editor by selector without needing the instance reference.
+
+**Parameters:**
+- `selector` (string|HTMLElement) - CSS selector or DOM element
+
+**Returns:** HTML string
+
+**Example:**
+```javascript
+// Get value directly without instance reference
+const content = OzzWyg.getValue('.my-editor');
+
+// Or by element
+const element = document.querySelector('.my-editor');
+const content = OzzWyg.getValue(element);
+```
+
+#### `OzzWyg.on(selector, eventName, callback)`
+
+Bind event to editor by selector without needing the instance reference.
+
+**Parameters:**
+- `selector` (string|HTMLElement) - CSS selector or DOM element
+- `eventName` (string) - Event name without 'ozzwyg:' prefix
+- `callback` (Function) - Event callback function
+
+**Example:**
+```javascript
+// Bind event without instance reference
+OzzWyg.on('.my-editor', 'input', (e) => {
+  console.log('Content changed:', e.detail.content);
+});
+
+// Or by element
+const element = document.querySelector('.my-editor');
+OzzWyg.on(element, 'focus', (e) => {
+  console.log('Editor focused');
+});
+```
+
+#### `OzzWyg.off(selector, eventName, callback)`
+
+Unbind event from editor by selector.
+
+**Parameters:**
+- `selector` (string|HTMLElement) - CSS selector or DOM element
+- `eventName` (string) - Event name without 'ozzwyg:' prefix
+- `callback` (Function) - Event callback function
+
+**Example:**
+```javascript
+const handler = (e) => console.log('Input:', e.detail);
+OzzWyg.on('.my-editor', 'input', handler);
+// Later...
+OzzWyg.off('.my-editor', 'input', handler);
+```
+
 ### Multiple Editors
 
 The editor supports multiple instances on the same page:
@@ -217,6 +364,37 @@ The editor supports multiple instances on the same page:
   
   // Get value from specific editor
   const editor1Content = editor.getValue('i-abc123');
+</script>
+```
+
+### Accessing Already Initialized Editors
+
+You can access and interact with editors that were initialized elsewhere:
+
+```html
+<!-- Editor initialized in another script -->
+<div class="my-editor" data-ozz-wyg></div>
+
+<script>
+  // Get the instance
+  const instance = OzzWyg.getInstance('.my-editor');
+  
+  // Get value
+  const content = OzzWyg.getValue('.my-editor');
+  
+  // Bind events
+  OzzWyg.on('.my-editor', 'input', (e) => {
+    console.log('Content:', e.detail.content);
+  });
+  
+  // Or use instance methods
+  if (instance) {
+    const element = document.querySelector('.my-editor');
+    const editorID = element.getAttribute('data-editor');
+    instance.on(editorID, 'focus', () => {
+      console.log('Editor focused!');
+    });
+  }
 </script>
 ```
 
@@ -416,6 +594,36 @@ editorElement.addEventListener('ozzwyg:input', (e) => {
 editorElement.addEventListener('ozzwyg:paste', (e) => {
   console.log('Pasted content cleaned:', e.detail.cleanedContent);
 });
+```
+
+### Accessing Already Initialized Editor
+
+```javascript
+// Editor was initialized elsewhere, you just have the DOM element
+const editorElement = document.querySelector('.my-editor');
+
+// Method 1: Using static methods (recommended)
+// Get value
+const content = OzzWyg.getValue('.my-editor');
+
+// Bind events
+OzzWyg.on('.my-editor', 'input', (e) => {
+  console.log('Content changed:', e.detail.content);
+});
+
+// Method 2: Get instance first, then use instance methods
+const instance = OzzWyg.getInstance('.my-editor');
+if (instance) {
+  const editorID = editorElement.getAttribute('data-editor');
+  
+  // Get value
+  const content = instance.getValue(editorID);
+  
+  // Bind events
+  instance.on(editorID, 'focus', () => {
+    console.log('Editor focused!');
+  });
+}
 ```
 
 ### Form Integration
