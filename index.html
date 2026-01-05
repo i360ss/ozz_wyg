@@ -20,6 +20,39 @@
       selector: '.wysiwyg-editor',
     });
 
+    // Listen to editor events
+    const editorElement = document.querySelector('.wysiwyg-editor');
+    
+    // Focus event
+    editorElement.addEventListener('ozzwyg:focus', (e) => {
+      console.log('Editor focused', e.detail);
+    });
+
+    // Blur event
+    editorElement.addEventListener('ozzwyg:blur', (e) => {
+      console.log('Editor blurred', e.detail);
+    });
+
+    // Input event - fires on every content change
+    editorElement.addEventListener('ozzwyg:input', (e) => {
+      console.log('Content changed', e.detail);
+    });
+
+    // Change event - fires when editor loses focus after content change
+    editorElement.addEventListener('ozzwyg:change', (e) => {
+      console.log('Content saved', e.detail);
+    });
+
+    // Paste event
+    editorElement.addEventListener('ozzwyg:paste', (e) => {
+      console.log('Content pasted', e.detail);
+    });
+
+    // Keydown event
+    editorElement.addEventListener('ozzwyg:keydown', (e) => {
+      console.log('Key pressed', e.detail);
+    });
+
     document.getElementById('submit').addEventListener('click', () => {
       document.querySelector('.render').innerHTML = editor.getValue();
       console.log(editor.getValue());

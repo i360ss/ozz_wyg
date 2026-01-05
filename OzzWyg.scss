@@ -64,6 +64,10 @@ $icon_dir: './';
         border: 1px solid $light-3;
         background-color: $light-2;
       }
+      &.active {
+        border: 1px solid $light-3;
+        background-color: $light-3;
+      }
     }
     &:not(.ozz-wyg__tool--headings) {
       button {

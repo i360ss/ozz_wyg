@@ -189,28 +189,537 @@ class OzzWyg {
     });
     
     this.playGround = this.editor.querySelector('[data-editor-area]');
+    
+    // Initialize event listeners
+    this.initEventListeners();
+  }
 
-    // Modify on input
-    this.playGround.addEventListener('input', () => {
-      // Modify tables
-      const tables = this.playGround.querySelectorAll('table');
-      tables.forEach((table) => {
-        // Wrap table
-        if (!table.closest('.ozz-wyg-table-wrapper')) {
-          const tableWrapped = document.createElement('div');
-          tableWrapped.classList.add('ozz-wyg-table-wrapper');
-          tableWrapped.innerHTML = table.outerHTML;
-          table.outerHTML = tableWrapped.outerHTML;
-        }
+  /**
+   * Initialize all event listeners for the editor
+   */
+  initEventListeners() {
+    // Input event - fires on content change
+    this.playGround.addEventListener('input', (e) => {
+      this.handleInput(e);
+    });
 
-        // Clear inline styles
-        table.removeAttribute('style');
-        const tItems = table.querySelectorAll('tbody, thead, tfoot, tr, td, th');
-        tItems.forEach(item => {
-          item.removeAttribute('style');
-        });
+    // Focus event - when editor gains focus
+    this.playGround.addEventListener('focus', (e) => {
+      this.emitEvent('focus', { editorID: this.editorID, event: e });
+      this.editor.classList.add('ozz-wyg--focused');
+    });
+
+    // Blur event - when editor loses focus
+    this.playGround.addEventListener('blur', (e) => {
+      this.emitEvent('blur', { editorID: this.editorID, event: e });
+      this.editor.classList.remove('ozz-wyg--focused');
+      this.emitEvent('change', { 
+        editorID: this.editorID, 
+        content: this.playGround.innerHTML,
+        event: e 
       });
     });
+
+    // Paste event - clean pasted content
+    this.playGround.addEventListener('paste', (e) => {
+      this.handlePaste(e);
+    });
+
+    // Keyboard shortcuts
+    this.playGround.addEventListener('keydown', (e) => {
+      this.handleKeydown(e);
+    });
+
+    // Selection change - update toolbar states
+    document.addEventListener('selectionchange', () => {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const commonAncestor = range.commonAncestorContainer;
+        const node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+        if (node && this.playGround.contains(node)) {
+          this.updateToolbarStates();
+        }
+      }
+    });
+
+    // Click event - update toolbar states when clicking in editor
+    this.playGround.addEventListener('click', () => {
+      setTimeout(() => this.updateToolbarStates(), 10);
+    });
+
+    // Mouseup event - update toolbar states after selection
+    this.playGround.addEventListener('mouseup', () => {
+      setTimeout(() => this.updateToolbarStates(), 10);
+    });
+
+    // Keyup event - update toolbar states after keyboard actions
+    this.playGround.addEventListener('keyup', () => {
+      setTimeout(() => this.updateToolbarStates(), 10);
+    });
+
+    // Keydown event - update toolbar states for arrow keys and other navigation
+    this.playGround.addEventListener('keydown', (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+        setTimeout(() => this.updateToolbarStates(), 10);
+      }
+    });
+  }
+
+  /**
+   * Handle input event
+   */
+  handleInput(e) {
+    // Modify tables
+    const tables = this.playGround.querySelectorAll('table');
+    tables.forEach((table) => {
+      // Wrap table
+      if (!table.closest('.ozz-wyg-table-wrapper')) {
+        const tableWrapped = document.createElement('div');
+        tableWrapped.classList.add('ozz-wyg-table-wrapper');
+        tableWrapped.innerHTML = table.outerHTML;
+        table.outerHTML = tableWrapped.outerHTML;
+      }
+
+      // Clear inline styles
+      table.removeAttribute('style');
+      const tItems = table.querySelectorAll('tbody, thead, tfoot, tr, td, th');
+      tItems.forEach(item => {
+        item.removeAttribute('style');
+      });
+    });
+
+    // Emit custom input event
+    this.emitEvent('input', { 
+      editorID: this.editorID, 
+      content: this.playGround.innerHTML,
+      event: e 
+    });
+  }
+
+  /**
+   * Handle paste event - clean pasted content
+   */
+  handlePaste(e) {
+    e.preventDefault();
+    
+    // Get pasted content
+    const clipboardData = e.clipboardData || window.clipboardData;
+    const pastedData = clipboardData.getData('text/html') || clipboardData.getData('text/plain');
+    
+    // Clean the pasted content
+    const cleanedContent = this.cleanPastedContent(pastedData);
+    
+    // Insert cleaned content
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      
+      // Delete selected content (deleteContents is a Range method, not Selection)
+      range.deleteContents();
+      
+      // Insert cleaned content
+      if (cleanedContent) {
+        // If it's HTML, use fragment
+        if (pastedData.includes('<')) {
+          const fragment = range.createContextualFragment(cleanedContent);
+          range.insertNode(fragment);
+          
+          // Move cursor to end of inserted content
+          if (fragment.lastChild) {
+            range.setStartAfter(fragment.lastChild);
+          } else {
+            range.setStartAfter(fragment);
+          }
+        } else {
+          // Plain text
+          const textNode = document.createTextNode(cleanedContent);
+          range.insertNode(textNode);
+          range.setStartAfter(textNode);
+        }
+        range.collapse(true);
+        
+        // Update selection
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    } else {
+      // No selection, insert at cursor position
+      const range = document.createRange();
+      range.selectNodeContents(this.playGround);
+      range.collapse(false);
+      
+      if (cleanedContent) {
+        if (pastedData.includes('<')) {
+          const fragment = range.createContextualFragment(cleanedContent);
+          range.insertNode(fragment);
+        } else {
+          const textNode = document.createTextNode(cleanedContent);
+          range.insertNode(textNode);
+        }
+      }
+    }
+
+    // Emit paste event
+    this.emitEvent('paste', { 
+      editorID: this.editorID, 
+      originalContent: pastedData,
+      cleanedContent: cleanedContent,
+      event: e 
+    });
+
+    // Trigger input event manually
+    this.playGround.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  /**
+   * Clean pasted content - remove unwanted styles and tags
+   */
+  cleanPastedContent(content) {
+    // Create temporary div to parse HTML
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+
+    // Remove unwanted attributes
+    const unwantedAttributes = ['style', 'class', 'id', 'width', 'height', 'border'];
+    const allElements = tempDiv.querySelectorAll('*');
+    allElements.forEach(el => {
+      unwantedAttributes.forEach(attr => {
+        el.removeAttribute(attr);
+      });
+    });
+
+    // Remove script and style tags
+    const scripts = tempDiv.querySelectorAll('script, style');
+    scripts.forEach(el => el.remove());
+
+    // Clean up empty elements
+    const emptyElements = tempDiv.querySelectorAll('p:empty, div:empty, span:empty');
+    emptyElements.forEach(el => {
+      if (el.textContent.trim() === '') {
+        el.remove();
+      }
+    });
+
+    return tempDiv.innerHTML || tempDiv.textContent;
+  }
+
+  /**
+   * Handle keyboard shortcuts
+   */
+  handleKeydown(e) {
+    // Ctrl/Cmd + B - Bold
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+      e.preventDefault();
+      this.exeCMD('bold');
+      this.updateToolbarStates();
+      return;
+    }
+
+    // Ctrl/Cmd + I - Italic
+    if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+      e.preventDefault();
+      this.exeCMD('italic');
+      this.updateToolbarStates();
+      return;
+    }
+
+    // Ctrl/Cmd + U - Underline
+    if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+      e.preventDefault();
+      this.exeCMD('underline');
+      this.updateToolbarStates();
+      return;
+    }
+
+    // Ctrl/Cmd + K - Link
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      const linkBtn = this.editor.querySelector('button[data-action="link"]');
+      if (linkBtn) linkBtn.click();
+      return;
+    }
+
+    // Ctrl/Cmd + Z - Undo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      // Allow default undo behavior
+      setTimeout(() => this.updateToolbarStates(), 10);
+      return;
+    }
+
+    // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y - Redo
+    if (((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z') || 
+        ((e.ctrlKey || e.metaKey) && e.key === 'y')) {
+      // Allow default redo behavior
+      setTimeout(() => this.updateToolbarStates(), 10);
+      return;
+    }
+
+    // Emit keydown event
+    this.emitEvent('keydown', { 
+      editorID: this.editorID, 
+      key: e.key,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey,
+      shiftKey: e.shiftKey,
+      event: e 
+    });
+  }
+
+  /**
+   * Update toolbar button states based on current selection
+   */
+  updateToolbarStates() {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) {
+      // Clear all active states if no selection
+      this.clearAllToolbarStates();
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const commonAncestor = range.commonAncestorContainer;
+    
+    // Check if selection is within this editor
+    const node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+    if (!node || !this.playGround.contains(node)) {
+      this.clearAllToolbarStates();
+      return;
+    }
+
+    // Store current focus to restore later
+    const wasFocused = document.activeElement === this.playGround;
+    
+    // Temporarily focus playground for queryCommandState to work correctly
+    if (!wasFocused) {
+      this.playGround.focus();
+    }
+
+    // Update bold button
+    const boldBtn = this.editor.querySelector('button[data-action="bold"]');
+    if (boldBtn) {
+      try {
+        const isBold = document.queryCommandState('bold');
+        boldBtn.classList.toggle('active', isBold);
+      } catch (e) {
+        // Fallback: check if parent is strong or b tag
+        const parent = this.getParentTag(range, ['strong', 'b']);
+        boldBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update italic button
+    const italicBtn = this.editor.querySelector('button[data-action="italic"]');
+    if (italicBtn) {
+      try {
+        const isItalic = document.queryCommandState('italic');
+        italicBtn.classList.toggle('active', isItalic);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['em', 'i']);
+        italicBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update underline button
+    const underlineBtn = this.editor.querySelector('button[data-action="underline"]');
+    if (underlineBtn) {
+      try {
+        const isUnderline = document.queryCommandState('underline');
+        underlineBtn.classList.toggle('active', isUnderline);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['u']);
+        underlineBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update strikethrough button
+    const strikeBtn = this.editor.querySelector('button[data-action="strikethrough"]');
+    if (strikeBtn) {
+      try {
+        const isStrike = document.queryCommandState('strikethrough');
+        strikeBtn.classList.toggle('active', isStrike);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['s', 'strike', 'del']);
+        strikeBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update subscript button
+    const subBtn = this.editor.querySelector('button[data-action="subscript"]');
+    if (subBtn) {
+      try {
+        const isSub = document.queryCommandState('subscript');
+        subBtn.classList.toggle('active', isSub);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['sub']);
+        subBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update superscript button
+    const supBtn = this.editor.querySelector('button[data-action="superscript"]');
+    if (supBtn) {
+      try {
+        const isSup = document.queryCommandState('superscript');
+        supBtn.classList.toggle('active', isSup);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['sup']);
+        supBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update format block (headings, paragraph)
+    this.updateFormatBlockState(range);
+
+    // Update list buttons
+    const olBtn = this.editor.querySelector('button[data-action="insertOrderedList"]');
+    if (olBtn) {
+      try {
+        const isOL = document.queryCommandState('insertOrderedList');
+        olBtn.classList.toggle('active', isOL);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['ol']);
+        olBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    const ulBtn = this.editor.querySelector('button[data-action="insertUnorderedList"]');
+    if (ulBtn) {
+      try {
+        const isUL = document.queryCommandState('insertUnorderedList');
+        ulBtn.classList.toggle('active', isUL);
+      } catch (e) {
+        const parent = this.getParentTag(range, ['ul']);
+        ulBtn.classList.toggle('active', !!parent);
+      }
+    }
+
+    // Update alignment buttons
+    const alignLeftBtn = this.editor.querySelector('button[data-action="justifyLeft"]');
+    if (alignLeftBtn) {
+      try {
+        const isLeft = document.queryCommandState('justifyLeft');
+        alignLeftBtn.classList.toggle('active', isLeft);
+      } catch (e) {
+        alignLeftBtn.classList.remove('active');
+      }
+    }
+
+    const alignCenterBtn = this.editor.querySelector('button[data-action="justifyCenter"]');
+    if (alignCenterBtn) {
+      try {
+        const isCenter = document.queryCommandState('justifyCenter');
+        alignCenterBtn.classList.toggle('active', isCenter);
+      } catch (e) {
+        alignCenterBtn.classList.remove('active');
+      }
+    }
+
+    const alignRightBtn = this.editor.querySelector('button[data-action="justifyRight"]');
+    if (alignRightBtn) {
+      try {
+        const isRight = document.queryCommandState('justifyRight');
+        alignRightBtn.classList.toggle('active', isRight);
+      } catch (e) {
+        alignRightBtn.classList.remove('active');
+      }
+    }
+
+    const justifyBtn = this.editor.querySelector('button[data-action="justifyFull"]');
+    if (justifyBtn) {
+      try {
+        const isJustify = document.queryCommandState('justifyFull');
+        justifyBtn.classList.toggle('active', isJustify);
+      } catch (e) {
+        justifyBtn.classList.remove('active');
+      }
+    }
+  }
+
+  /**
+   * Get parent element with specific tag names
+   */
+  getParentTag(range, tagNames) {
+    let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) {
+      node = node.parentElement;
+    }
+    
+    while (node && node !== this.playGround) {
+      if (node.nodeType === 1 && tagNames.includes(node.tagName.toLowerCase())) {
+        return node;
+      }
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  /**
+   * Update format block state (headings, paragraph)
+   */
+  updateFormatBlockState(range) {
+    let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) {
+      node = node.parentElement;
+    }
+    
+    // Find the block-level element
+    let blockTag = null;
+    while (node && node !== this.playGround) {
+      if (node.nodeType === 1) {
+        const tagName = node.tagName.toLowerCase();
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'blockquote', 'pre', 'code', 'div'].includes(tagName)) {
+          blockTag = tagName;
+          break;
+        }
+      }
+      node = node.parentElement;
+    }
+    
+    // Update heading/format buttons
+    const headingBtns = this.editor.querySelectorAll('button[data-action="formatBlock"]');
+    headingBtns.forEach(btn => {
+      const value = btn.getAttribute('data-value');
+      if (value) {
+        const valueLower = value.toLowerCase();
+        // Handle paragraph - can be 'p' or 'P'
+        if (valueLower === 'p' && (blockTag === 'p' || blockTag === 'div' || !blockTag)) {
+          btn.classList.toggle('active', true);
+        } else if (valueLower === blockTag) {
+          btn.classList.toggle('active', true);
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+    });
+  }
+
+  /**
+   * Clear all toolbar button active states
+   */
+  clearAllToolbarStates() {
+    const allButtons = this.editor.querySelectorAll('button[data-action]');
+    allButtons.forEach(btn => btn.classList.remove('active'));
+  }
+
+  /**
+   * Emit custom event
+   */
+  emitEvent(eventName, data = {}) {
+    const event = new CustomEvent(`ozzwyg:${eventName}`, {
+      detail: {
+        editorID: this.editorID,
+        editor: this.editor,
+        playGround: this.playGround,
+        ...data
+      },
+      bubbles: true,
+      cancelable: true
+    });
+    
+    // Dispatch on both the editor element and the playground
+    this.editor.dispatchEvent(event);
+    this.playGround.dispatchEvent(event);
   }
 
   /**
@@ -317,6 +826,9 @@ class OzzWyg {
     } else {
       this.exeCMD(action, value);
     }
+
+    // Update toolbar states after action
+    setTimeout(() => this.updateToolbarStates(), 10);
   }
 
   /**

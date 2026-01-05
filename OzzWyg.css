@@ -47,6 +47,10 @@
   border: 1px solid #ddd;
   background-color: #eee;
 }
+.ozz-wyg__tool button.active {
+  border: 1px solid #ddd;
+  background-color: #ddd;
+}
 .ozz-wyg__tool:not(.ozz-wyg__tool--headings) button:not(.ozz-wyg-regular-btn) {
   font-size: 0;
   line-height: 1.7rem;
