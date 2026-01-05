@@ -467,50 +467,6 @@ editorElement.addEventListener('ozzwyg:paste', (e) => {
 </script>
 ```
 
-## Styling
-
-### Active Button State
-
-The editor automatically adds an `active` class to toolbar buttons when the corresponding formatting is applied to the selected text. Style it like this:
-
-```css
-.ozz-wyg__tool button.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-/* Or with your preferred styling */
-.ozz-wyg__tool button.active {
-  background-color: #333;
-  color: #fff;
-  font-weight: bold;
-}
-```
-
-### Focus State
-
-The editor adds an `ozz-wyg--focused` class when focused:
-
-```css
-.ozz-wyg.ozz-wyg--focused {
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-}
-```
-
-### Custom Styling
-
-You can customize the editor appearance by overriding CSS classes:
-
-- `.ozz-wyg` - Main editor container
-- `.ozz-wyg__toolbar` - Toolbar container
-- `.ozz-wyg__tool` - Individual tool container
-- `.ozz-wyg__editor-area` - Editable area
-- `.ozz-wyg-table-wrapper` - Table wrapper
-- `.ozz-wyg-popover` - Link popover
-- `.ozz-wyg-media-actions` - Media actions popover
-
 ## Features in Detail
 
 ### Smart Paste
