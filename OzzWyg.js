@@ -9,7 +9,8 @@
 class OzzWyg {
   constructor(options) {
     this.options = { ...OzzWyg.defaults, ...options };
-    this.editors = document.querySelectorAll(this.options.selector).length > 0 ? document.querySelectorAll(this.options.selector) : false;
+    const editorElements = document.querySelectorAll(this.options.selector);
+    this.editors = editorElements.length > 0 ? editorElements : false;
 
     // Tools
     this.tools = {
@@ -134,12 +135,22 @@ class OzzWyg {
     };
 
     // Initiate Each Editors
+    this.editorInstances = new Map();
     if (this.editors) {
       this.editors.forEach(editor => {
-        this.editorID = `i-${this.randomId()}`;
-        editor.setAttribute('data-editor', this.editorID);
+        const editorID = `i-${this.randomId()}`;
+        editor.setAttribute('data-editor', editorID);
+        const instance = {
+          id: editorID,
+          element: editor,
+          playGround: null
+        };
+        this.editorInstances.set(editorID, instance);
+        this.currentEditorID = editorID;
         this.editor = editor;
+        this.editorID = editorID;
         this.initEditor();
+        instance.playGround = this.playGround;
       });
     }
   }
@@ -155,6 +166,28 @@ class OzzWyg {
         this.fireAction(e);
       });
     });
+    
+    // Initialize child tool dropdowns
+    this.editor.querySelectorAll('.ozz-wyg__tool-has-child').forEach(parent => {
+      const trigger = parent.querySelector('.more-tools-trigger');
+      const childMenu = parent.parentElement.querySelector('.ozz-wyg__tool-child');
+      if (trigger && childMenu) {
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          childMenu.classList.toggle('active');
+        });
+      }
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.ozz-wyg__tool-has-child')) {
+        this.editor.querySelectorAll('.ozz-wyg__tool-child').forEach(menu => {
+          menu.classList.remove('active');
+        });
+      }
+    });
+    
     this.playGround = this.editor.querySelector('[data-editor-area]');
 
     // Modify on input
@@ -291,9 +324,14 @@ class OzzWyg {
    */
   linkPopUp(ev) {
     const linkCls = 'ozz-wyg__tool-link-',
-      parent = ev.target.closest(`.${linkCls}trigger`),
-      settingsDOM = parent.querySelector(`.${linkCls}setting`),
-      selection = window.getSelection();
+      parent = ev.target.closest(`.${linkCls}trigger`);
+    
+    if (!parent) return;
+    
+    const settingsDOM = parent.querySelector(`.${linkCls}setting`);
+    if (!settingsDOM) return;
+    
+    const selection = window.getSelection();
 
     // Store selection
     let sRange = false;
@@ -303,13 +341,21 @@ class OzzWyg {
     }
 
     // Check if there's an existing anchor link
-    const existingAnchor = selection.anchorNode?.parentElement.tagName === 'A' ? selection.anchorNode.parentElement : null,
-      existingURL = existingAnchor ? existingAnchor.href : '',
-      existingTarget = existingAnchor ? existingAnchor.target : '';
+    let existingAnchor = null;
+    if (selection.anchorNode) {
+      const parent = selection.anchorNode.parentElement;
+      if (parent && parent.tagName === 'A') {
+        existingAnchor = parent;
+      } else if (parent && parent.closest('a')) {
+        existingAnchor = parent.closest('a');
+      }
+    }
+    const existingURL = existingAnchor ? existingAnchor.href : '';
+    const existingTarget = existingAnchor ? existingAnchor.target : '';
 
     settingsDOM.innerHTML = `
-      <label>URL:</label> <input form="" type="text" id="url-${this.editorID}" value="${existingURL}"><br>
-      <label>Target:</label> <input form="" type="text" id="target-${this.editorID}" value="${existingTarget ? existingTarget : '_blank'}"><br>
+      <label>URL:</label> <input type="text" id="url-${this.editorID}" value="${existingURL}"><br>
+      <label>Target:</label> <input type="text" id="target-${this.editorID}" value="${existingTarget ? existingTarget : '_blank'}"><br>
       <button type="button" class="ozz-wyg-regular-btn" id="insertLinkTrigger-${this.editorID}">${existingAnchor ? 'Update' : 'Insert'}</button>`;
     settingsDOM.classList.toggle('active');
 
@@ -320,12 +366,17 @@ class OzzWyg {
       const targetInput = settingsDOM.querySelector('#target-' + this.editorID).value;
 
       if (urlInput && targetInput) {
-        const anchor = existingAnchor || document.createElement('a');
-        anchor.href = urlInput;
-        anchor.target = targetInput;
-        anchor.textContent = existingAnchor ? existingAnchor.textContent : selectionStr;
-
-        if (!existingAnchor) {
+        if (existingAnchor) {
+          // Update existing anchor
+          existingAnchor.href = urlInput;
+          existingAnchor.target = targetInput;
+        } else {
+          // Create new anchor
+          const anchor = document.createElement('a');
+          anchor.href = urlInput;
+          anchor.target = targetInput;
+          anchor.textContent = selectionStr || urlInput;
+          
           if (sRange) {
             selection.removeAllRanges();
             selection.addRange(sRange);
@@ -351,8 +402,16 @@ class OzzWyg {
    */
   linkPopOver() {
     this.playGround.querySelectorAll('a').forEach(anchor => {
+      // Only add listeners if not already added
+      if (anchor.hasAttribute('data-link-handled')) {
+        return;
+      }
+      anchor.setAttribute('data-link-handled', 'true');
+      
       anchor.addEventListener('click', (e) => {
         if (anchor.getAttribute('role') !== 'popover') {
+          e.preventDefault();
+          e.stopPropagation();
           const popoverDOM = document.createElement('span');
           popoverDOM.setAttribute('contenteditable', false);
           popoverDOM.classList.add('ozz-wyg-popover');
@@ -406,11 +465,15 @@ class OzzWyg {
    * Table Popup
    */
   tablePopUp(ev) {
-    const
-      tableCls = 'ozz-wyg__tool-table-',
-      parent = ev.target.closest(`.${tableCls}trigger`),
-      settingsDOM = parent.querySelector(`.${tableCls}setting`),
-      selection = window.getSelection();
+    const tableCls = 'ozz-wyg__tool-table-',
+      parent = ev.target.closest(`.${tableCls}trigger`);
+    
+    if (!parent) return;
+    
+    const settingsDOM = parent.querySelector(`.${tableCls}setting`);
+    if (!settingsDOM) return;
+    
+    const selection = window.getSelection();
 
     // Store selection
     let sRange = false;
@@ -419,15 +482,15 @@ class OzzWyg {
     }
 
     settingsDOM.innerHTML = `
-      <input form="" type="number" min="1" max="100" value="2" placeholder="X" id="row-${this.editorID}">
-      <input form="" type="number" min="1" max="100" value="2" placeholder="Y" id="column-${this.editorID}">
+      <input type="number" min="1" max="100" value="2" placeholder="X" id="row-${this.editorID}">
+      <input type="number" min="1" max="100" value="2" placeholder="Y" id="column-${this.editorID}">
       <span class="sub-options">
         <span>
-          <input form="" type="checkbox" id="has-th-${this.editorID}">
-          <label for="has-th-${this.editorID}"">No Header</label>
+          <input type="checkbox" id="has-th-${this.editorID}">
+          <label for="has-th-${this.editorID}">No Header</label>
         </span>
         <span>
-          <input form="" type="checkbox" id="has-footer-${this.editorID}">
+          <input type="checkbox" id="has-footer-${this.editorID}">
           <label for="has-footer-${this.editorID}">No Footer</label>
         </span>
       </span>
@@ -460,8 +523,8 @@ class OzzWyg {
       const tBody = table.createTBody();
       for (let i = 0; i < rows; i++) {
         const tRows = tBody.insertRow(i);
-        for (let i = 0; i < columns; i++) {
-          tRows.insertCell(i);
+        for (let j = 0; j < columns; j++) {
+          tRows.insertCell(j);
         }
       }
 
@@ -500,8 +563,14 @@ class OzzWyg {
    * Table actions
    */
   tableActions() {
-    const $table = document.querySelectorAll('.ozz-wyg-table-wrapper');
+    const $table = this.playGround.querySelectorAll('.ozz-wyg-table-wrapper');
     $table.forEach(tbl => {
+      // Only add listeners if not already added
+      if (tbl.hasAttribute('data-table-handled')) {
+        return;
+      }
+      tbl.setAttribute('data-table-handled', 'true');
+      
       tbl.addEventListener('mouseover', () => {
         let tblTools = tbl.querySelectorAll('.ozz-wyg-table-actions');
         if (tblTools.length === 0) {
@@ -522,6 +591,7 @@ class OzzWyg {
           actions.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', (e) => {
               e.preventDefault();
+              e.stopPropagation();
               const action = e.target.getAttribute('data-tbl-action');
               switch (action) {
                 case 'addrow':
@@ -543,10 +613,13 @@ class OzzWyg {
           });
           tbl.appendChild(actions);
         }
+      });
 
-        tbl.addEventListener('mouseleave', () => {
-          tblTools[0] ? tblTools[0].remove() : false;
-        });
+      tbl.addEventListener('mouseleave', () => {
+        const tblTools = tbl.querySelectorAll('.ozz-wyg-table-actions');
+        if (tblTools.length > 0) {
+          tblTools[0].remove();
+        }
       });
     });
   }
@@ -556,9 +629,11 @@ class OzzWyg {
    * @param table_wrap
    */
   addTableRow(table_wrap) {
+    if (!table_wrap) return;
     const tbody = table_wrap.querySelector('tbody');
     if (tbody) {
-      const cellsCount = tbody.querySelector('tr')?.querySelectorAll('td')?.length ?? 1;
+      const firstRow = tbody.querySelector('tr');
+      const cellsCount = firstRow ? firstRow.querySelectorAll('td, th').length : 1;
       const newRow = tbody.insertRow(-1);
       for (let i = 0; i < cellsCount; i++) {
         const td = document.createElement('td');
@@ -573,7 +648,10 @@ class OzzWyg {
    * @param table_wrap
    */
   deleteTableRow(table_wrap) {
-    const tbody = table_wrap.querySelector('table tbody');
+    if (!table_wrap) return;
+    const table = table_wrap.querySelector('table');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
     if (tbody && tbody.rows.length > 1) {
       tbody.deleteRow(-1);
     }
@@ -584,34 +662,49 @@ class OzzWyg {
    * @param table_wrap
    */
   addTableCol(table_wrap) {
+    if (!table_wrap) return;
     const thead = table_wrap.querySelector('thead');
     const tbody = table_wrap.querySelector('tbody');
     const tfoot = table_wrap.querySelector('tfoot');
 
     const addCellToRows = (rows, newCellIndex, type='td') => {
+      if (!rows || rows.length === 0) return;
       rows.forEach((row) => {
         const td = document.createElement(type);
         td.innerHTML = '<br>';
-        row.insertBefore(td, row.cells[newCellIndex]);
+        if (newCellIndex < row.cells.length) {
+          row.insertBefore(td, row.cells[newCellIndex]);
+        } else {
+          row.appendChild(td);
+        }
       });
     }
 
     if (thead) {
       const headerRows = thead.querySelectorAll('tr');
-      const newCellIndex = headerRows[0]?.querySelectorAll('th, td')?.length ?? 0;
-      addCellToRows(headerRows, newCellIndex, 'th');
+      if (headerRows.length > 0) {
+        const firstRow = headerRows[0];
+        const newCellIndex = firstRow ? firstRow.querySelectorAll('th, td').length : 0;
+        addCellToRows(headerRows, newCellIndex, 'th');
+      }
     }
 
     if (tbody) {
       const bodyRows = tbody.querySelectorAll('tr');
-      const newCellIndex = bodyRows[0]?.querySelectorAll('td')?.length ?? 0;
-      addCellToRows(bodyRows, newCellIndex);
+      if (bodyRows.length > 0) {
+        const firstRow = bodyRows[0];
+        const newCellIndex = firstRow ? firstRow.querySelectorAll('td').length : 0;
+        addCellToRows(bodyRows, newCellIndex);
+      }
     }
 
     if (tfoot) {
       const footerRows = tfoot.querySelectorAll('tr');
-      const newCellIndex = footerRows[0]?.querySelectorAll('td')?.length ?? 0;
-      addCellToRows(footerRows, newCellIndex);
+      if (footerRows.length > 0) {
+        const firstRow = footerRows[0];
+        const newCellIndex = firstRow ? firstRow.querySelectorAll('td').length : 0;
+        addCellToRows(footerRows, newCellIndex);
+      }
     }
   }
 
@@ -620,15 +713,21 @@ class OzzWyg {
    * @param table_wrap
    */
   deleteTableCol(table_wrap) {
+    if (!table_wrap) return;
     const thead = table_wrap.querySelector('thead');
     const tbody = table_wrap.querySelector('tbody');
     const tfoot = table_wrap.querySelector('tfoot');
 
     const deleteLastCell = (rows) => {
-      const lastCellIndex = rows[0]?.cells.length - 1;
-      if (lastCellIndex > 0) {
+      if (!rows || rows.length === 0) return;
+      const firstRow = rows[0];
+      if (!firstRow) return;
+      const lastCellIndex = firstRow.cells.length - 1;
+      if (lastCellIndex >= 0) {
         rows.forEach((row) => {
-          row.deleteCell(lastCellIndex);
+          if (row.cells.length > 1) {
+            row.deleteCell(lastCellIndex);
+          }
         });
       }
     }
@@ -651,9 +750,14 @@ class OzzWyg {
    */
   mediaPopUp(ev) {
     const linkCls = 'ozz-wyg__tool-media-',
-      parent = ev.target.closest(`.${linkCls}trigger`),
-      settingsDOM = parent.querySelector(`.${linkCls}setting`),
-      selection = window.getSelection();
+      parent = ev.target.closest(`.${linkCls}trigger`);
+    
+    if (!parent) return;
+    
+    const settingsDOM = parent.querySelector(`.${linkCls}setting`);
+    if (!settingsDOM) return;
+    
+    const selection = window.getSelection();
 
     // Store selection
     let sRange = false;
@@ -666,9 +770,9 @@ class OzzWyg {
     let existingALT = '';
 
     settingsDOM.innerHTML = `
-      <label>Upload:</label> <input form="" type="file" accept="image/*,video/*" id="file-${this.editorID}" value="${existingURL}"><br>
-      <label>Media URL:</label> <input form="" type="text" id="url-${this.editorID}" value="${existingURL}"><br>
-      <label>Alt:</label> <input form="" type="text" id="alt-${this.editorID}" value="${existingALT}"><br>
+      <label>Upload:</label> <input type="file" accept="image/*,video/*" id="file-${this.editorID}"><br>
+      <label>Media URL:</label> <input type="text" id="url-${this.editorID}" value="${existingURL}"><br>
+      <label>Alt:</label> <input type="text" id="alt-${this.editorID}" value="${existingALT}"><br>
       <button type="button" class="ozz-wyg-regular-btn" id="insertMediaTrigger-${this.editorID}">${existingURL ? 'Update' : 'Insert'}</button>`;
     settingsDOM.classList.toggle('active');
 
@@ -757,8 +861,14 @@ class OzzWyg {
    * Media Popover
    */
   mediaPopover() {
-    const mediaItems = this.editor.querySelectorAll('img, .media-wrapper');
+    // Use event delegation to prevent duplicate listeners
+    const mediaItems = this.playGround.querySelectorAll('img, .media-wrapper');
     mediaItems.forEach(mediaItem => {
+      // Remove existing click handlers by cloning
+      if (mediaItem.hasAttribute('data-media-handled')) {
+        return;
+      }
+      mediaItem.setAttribute('data-media-handled', 'true');
       mediaItem.addEventListener('click', (e) => {
         const popoverDOM = document.createElement('div');
         popoverDOM.setAttribute('contenteditable', false);
@@ -781,7 +891,7 @@ class OzzWyg {
           <button type="button" title="Align Center" data-media-action="align-center">Align Center</button>
           <button type="button" title="Align Right" data-media-action="align-right">Align Right</button>
           <button type="button" title="Inline" data-media-action="inline">Inline</button>
-          <select form="" data-media-action="width">${options}</select>
+          <select data-media-action="width">${options}</select>
           <button type="button" title="Delete" data-media-action="delete">Delete</button>
         `;
 
@@ -863,7 +973,7 @@ class OzzWyg {
    */
   getYouTubeEmbedCode(url) {
     const videoID = this.extractYouTubeVideoID(url);
-    return `<div class="media-wrapper"><span class="height-holder"></span><iframe src="https://www.youtube.com/embed/${videoID}" frameborder="0" allowfullscreen></iframe><div>`;
+    return `<div class="media-wrapper"><span class="height-holder"></span><iframe src="https://www.youtube.com/embed/${videoID}" frameborder="0" allowfullscreen></iframe></div>`;
   }
 
   /**
@@ -911,9 +1021,9 @@ class OzzWyg {
    * Quote Text
    */
   quoteText() {
-    const
-      selection = window.getSelection(),
-      quote = '<blockquote><p>' + ((selection.toString() == '') ? '<br>' : selection.toString()) + 
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    const quote = '<blockquote><p>' + (selectedText === '' ? '<br>' : selectedText) + 
       '</p><footer class="blockquote-footer">--Footer, <cite>cite</cite></footer></blockquote><br>';
 
     document.execCommand('insertHTML', false, quote);
@@ -923,11 +1033,15 @@ class OzzWyg {
    * Add Code
    */
   codeText() {
-    const
-      selection = window.getSelection(),
-      code = '<code>' + selection.toString() + '</code>';
-
-    document.execCommand('insertHTML', false, code);
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    if (selectedText === '') {
+      // If no selection, insert empty code tag
+      document.execCommand('insertHTML', false, '<code></code>');
+    } else {
+      const code = '<code>' + selectedText + '</code>';
+      document.execCommand('insertHTML', false, code);
+    }
   }
 
   /**
@@ -936,7 +1050,9 @@ class OzzWyg {
   toggleCodeView() {
     if (this.isHTML()) {
       this.playGround.classList.remove('ozz-wyg-html-view');
-      this.playGround.innerHTML = this.playGround.textContent;
+      // Parse HTML from text content
+      const htmlContent = this.playGround.textContent;
+      this.playGround.innerHTML = htmlContent;
       this.tableActions(); // Init table Actions
       this.mediaPopover(); // Config Media Popover
     } else {
@@ -950,9 +1066,18 @@ class OzzWyg {
 
   /**
    * Get value from editor
+   * @param {string} editorID - Optional editor ID, if not provided returns first editor's value
    */
-  getValue() {
-    return this.playGround.innerHTML;
+  getValue(editorID = null) {
+    if (editorID && this.editorInstances.has(editorID)) {
+      return this.editorInstances.get(editorID).playGround.innerHTML;
+    }
+    // Return first editor's value for backward compatibility
+    if (this.editorInstances.size > 0) {
+      const firstInstance = this.editorInstances.values().next().value;
+      return firstInstance.playGround.innerHTML;
+    }
+    return this.playGround ? this.playGround.innerHTML : '';
   }
 }
 
