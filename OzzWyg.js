@@ -12,7 +12,18 @@ class OzzWyg {
 
   constructor(options) {
     this.options = { ...OzzWyg.defaults, ...options };
-    const editorElements = document.querySelectorAll(this.options.selector);
+
+    // Normalize selector: accept string, single DOM element, NodeList, or array of elements
+    let editorElements = [];
+    const selector = this.options.selector;
+    if (typeof selector === 'string') {
+      editorElements = document.querySelectorAll(selector);
+    } else if (selector instanceof Element) {
+      editorElements = [selector];
+    } else if (selector instanceof NodeList || Array.isArray(selector)) {
+      editorElements = selector;
+    }
+
     this.editors = editorElements.length > 0 ? editorElements : false;
 
     // Tools
@@ -164,6 +175,26 @@ class OzzWyg {
   }
 
   /**
+   * Set active editor context based on a child element (toolbar button / playground)
+   * @param {HTMLElement} element
+   * @returns {boolean} true if context updated
+   */
+  setActiveContextFromElement(element) {
+    if (!element) return false;
+    const editorEl = element.closest('.ozz-wyg');
+    if (!editorEl) return false;
+    const editorID = editorEl.getAttribute('data-editor');
+    const instance = this.editorInstances.get(editorID);
+    if (!instance) return false;
+
+    this.editor = instance.element;
+    this.playGround = instance.playGround;
+    this.editorID = editorID;
+    this.currentEditorID = editorID;
+    return true;
+  }
+
+  /**
    * Initialize Wysiwyg Editor
    */
   initEditor() {
@@ -171,6 +202,7 @@ class OzzWyg {
     this.editor.innerHTML = this.editorDOM();
     this.editor.querySelectorAll('button[data-action]').forEach(trigger => {
       trigger.addEventListener('click', (e) => {
+        this.setActiveContextFromElement(e.target);
         this.fireAction(e);
       });
     });
@@ -208,17 +240,20 @@ class OzzWyg {
   initEventListeners() {
     // Input event - fires on content change
     this.playGround.addEventListener('input', (e) => {
+      this.setActiveContextFromElement(this.playGround);
       this.handleInput(e);
     });
 
     // Focus event - when editor gains focus
     this.playGround.addEventListener('focus', (e) => {
+      this.setActiveContextFromElement(this.playGround);
       this.emitEvent('focus', { editorID: this.editorID, event: e });
       this.editor.classList.add('ozz-wyg--focused');
     });
 
     // Blur event - when editor loses focus
     this.playGround.addEventListener('blur', (e) => {
+      this.setActiveContextFromElement(this.playGround);
       this.emitEvent('blur', { editorID: this.editorID, event: e });
       this.editor.classList.remove('ozz-wyg--focused');
       this.emitEvent('change', { 
@@ -230,11 +265,13 @@ class OzzWyg {
 
     // Paste event - clean pasted content
     this.playGround.addEventListener('paste', (e) => {
+      this.setActiveContextFromElement(this.playGround);
       this.handlePaste(e);
     });
 
     // Keyboard shortcuts
     this.playGround.addEventListener('keydown', (e) => {
+      this.setActiveContextFromElement(this.playGround);
       this.handleKeydown(e);
     });
 
@@ -245,30 +282,36 @@ class OzzWyg {
         const range = selection.getRangeAt(0);
         const commonAncestor = range.commonAncestorContainer;
         const node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
-        if (node && this.playGround.contains(node)) {
-          this.updateToolbarStates();
+        if (node) {
+          if (this.setActiveContextFromElement(node) && this.playGround.contains(node)) {
+            this.updateToolbarStates();
+          }
         }
       }
     });
 
     // Click event - update toolbar states when clicking in editor
     this.playGround.addEventListener('click', () => {
+      this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Mouseup event - update toolbar states after selection
     this.playGround.addEventListener('mouseup', () => {
+      this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Keyup event - update toolbar states after keyboard actions
     this.playGround.addEventListener('keyup', () => {
+      this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Keydown event - update toolbar states for arrow keys and other navigation
     this.playGround.addEventListener('keydown', (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+        this.setActiveContextFromElement(this.playGround);
         setTimeout(() => this.updateToolbarStates(), 10);
       }
     });

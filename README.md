@@ -79,9 +79,22 @@ Download the files:
 <div class="my-editor"></div>
 
 <script>
-  const editor = new OzzWyg({
-    selector: '.my-editor'
-  });
+// Option 1: CSS selector (string)
+const editor = new OzzWyg({
+  selector: '.my-editor'
+});
+
+// Option 2: Single DOM element
+const elem = document.querySelector('.my-editor');
+const editor2 = new OzzWyg({
+  selector: elem
+});
+
+// Option 3: NodeList or array of elements
+const fields = document.querySelectorAll('[data-ozz-wyg]');
+const editor3 = new OzzWyg({
+  selector: fields
+});
 </script>
 ```
 
