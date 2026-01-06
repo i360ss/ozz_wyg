@@ -262,6 +262,7 @@
   padding: 5px 8px;
 }
 .ozz-wyg__editor-area {
+  overflow: auto;
   min-height: 150px;
   padding: 10px;
   border: 1px solid #ddd;
