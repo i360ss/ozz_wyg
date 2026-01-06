@@ -112,6 +112,7 @@ console.log(content); // HTML string
 ```javascript
 const editor = new OzzWyg({
   selector: '[data-ozz-wyg]',  // CSS selector for editor elements
+  value: '<p>Initial content</p>',  // Optional: Initial HTML content
   tools: [                      // Array of tools to include
     'headings',
     'bold',
@@ -119,6 +120,37 @@ const editor = new OzzWyg({
     // ... see Available Tools section
   ]
 });
+```
+
+### Setting Initial Content
+
+You can set initial content in three ways:
+
+**Method 1: Using `data-value` attribute**
+```html
+<div class="editor" data-value="<p>Initial content</p>"></div>
+<script>
+  const editor = new OzzWyg({ selector: '.editor' });
+</script>
+```
+
+**Method 2: Using inline HTML**
+```html
+<div class="editor"><p>Initial content</p></div>
+<script>
+  const editor = new OzzWyg({ selector: '.editor' });
+</script>
+```
+
+**Method 3: Using `value` option**
+```html
+<div class="editor"></div>
+<script>
+  const editor = new OzzWyg({
+    selector: '.editor',
+    value: '<p>Initial content</p>'
+  });
+</script>
 ```
 
 ### Default Configuration
@@ -213,6 +245,25 @@ const content = editor.getValue();
 
 // Get content from specific editor (when multiple editors exist)
 const content = editor.getValue('i-abc123');
+```
+
+#### `setValue(html, editorID)`
+
+Set the HTML content in the editor.
+
+**Parameters:**
+- `html` (string) - HTML content to set
+- `editorID` (string, optional) - Specific editor ID. If not provided, sets first editor's content.
+
+**Returns:** void
+
+**Example:**
+```javascript
+// Set content in first editor
+editor.setValue('<p>Hello World</p>');
+
+// Set content in specific editor (when multiple editors exist)
+editor.setValue('<p>Editor 1 Content</p>', 'i-abc123');
 ```
 
 #### `getEditorInstance(editorID)`
@@ -320,6 +371,26 @@ const content = OzzWyg.getValue('.my-editor');
 // Or by element
 const element = document.querySelector('.my-editor');
 const content = OzzWyg.getValue(element);
+```
+
+#### `OzzWyg.setValue(selector, html)`
+
+Set value in editor by selector without needing the instance reference.
+
+**Parameters:**
+- `selector` (string|HTMLElement) - CSS selector or DOM element
+- `html` (string) - HTML content to set
+
+**Returns:** void
+
+**Example:**
+```javascript
+// Set value directly without instance reference
+OzzWyg.setValue('.my-editor', '<p>Hello World</p>');
+
+// Or by element
+const element = document.querySelector('.my-editor');
+OzzWyg.setValue(element, '<p>New content</p>');
 ```
 
 #### `OzzWyg.on(selector, eventName, callback)`

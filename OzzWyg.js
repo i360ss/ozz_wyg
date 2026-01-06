@@ -154,11 +154,19 @@ class OzzWyg {
       this.editors.forEach(editor => {
         const editorID = `i-${this.randomId()}`;
         editor.setAttribute('data-editor', editorID);
+
+        // Capture initial content before we overwrite the DOM
+        const initialContent =
+          (typeof this.options.value === 'string' ? this.options.value : null) ??
+          editor.getAttribute('data-value') ??
+          editor.innerHTML;
+
         const instance = {
           id: editorID,
           element: editor,
           playGround: null,
-          ozzWygInstance: this
+          ozzWygInstance: this,
+          initialContent
         };
         this.editorInstances.set(editorID, instance);
         this.currentEditorID = editorID;
@@ -166,6 +174,19 @@ class OzzWyg {
         this.editorID = editorID;
         this.initEditor();
         instance.playGround = this.playGround;
+
+        // Apply initial content if provided
+        if (initialContent !== null && initialContent !== undefined && initialContent.trim() !== '') {
+          this.setValue(initialContent, editorID);
+        } else {
+          // Initialize features for any existing content in playground
+          setTimeout(() => {
+            this.setActiveContextFromElement(editor);
+            if (this.playGround) {
+              this.initializeContentFeatures();
+            }
+          }, 0);
+        }
         
         // Register instance in static registry
         OzzWyg.instances.set(editor, this);
@@ -1485,39 +1506,59 @@ class OzzWyg {
           <button type="button" title="Delete" data-media-action="delete">Delete</button>
         `;
 
-        if (this.editor.querySelectorAll('.ozz-wyg-media-actions').length === 0) {
-          mediaItem.insertAdjacentElement('afterend', popoverDOM);
-
-          // Position popover element
-          popoverDOM.style.top = `${e.clientY}px`;
-          popoverDOM.style.left = `${e.clientX}px`;
-
-          // Media Actions
-          popoverDOM.querySelectorAll('button, select').forEach(actionTrigger => {
-            if (actionTrigger.tagName === 'SELECT') {
-              actionTrigger.addEventListener('change', () => {
-                const action = actionTrigger.value;
-                mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('w-')));
-                if (action !== 'auto') {
-                  mediaItem.classList.add(action);
-                }
-              });
-            } else {
-              actionTrigger.addEventListener('click', () => {
-                const action = actionTrigger.getAttribute('data-media-action');
-                if (action == 'align-left' || action == 'align-right' || action == 'align-center') {
-                  mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('align-')));
-                  mediaItem.classList.add(action);
-                } else if (action == 'inline') {
-                  mediaItem.classList.toggle(action);
-                } else if (action == 'delete') {
-                  mediaItem.remove();
-                  popoverDOM.remove();
-                }
-              });
-            }
-          });
+        // Remove any existing popover first
+        const existingPopover = this.editor.querySelector('.ozz-wyg-media-actions');
+        if (existingPopover) {
+          existingPopover.remove();
         }
+        
+        mediaItem.insertAdjacentElement('afterend', popoverDOM);
+
+        // Position popover element at the click point
+        // Get the editor's position relative to viewport
+        const editorRect = this.editor.getBoundingClientRect();
+        
+        // Calculate position relative to editor container
+        const relativeX = e.clientX - editorRect.left;
+        const relativeY = e.clientY - editorRect.top;
+        
+        // Ensure editor has relative positioning for absolute children
+        const editorPosition = window.getComputedStyle(this.editor).position;
+        if (editorPosition === 'static') {
+          this.editor.style.position = 'relative';
+        }
+        
+        // Set position relative to editor (not absolute screen coordinates)
+        popoverDOM.style.position = 'absolute';
+        popoverDOM.style.top = `${relativeY}px`;
+        popoverDOM.style.left = `${relativeX}px`;
+        popoverDOM.style.zIndex = '1000';
+
+        // Media Actions
+        popoverDOM.querySelectorAll('button, select').forEach(actionTrigger => {
+          if (actionTrigger.tagName === 'SELECT') {
+            actionTrigger.addEventListener('change', () => {
+              const action = actionTrigger.value;
+              mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('w-')));
+              if (action !== 'auto') {
+                mediaItem.classList.add(action);
+              }
+            });
+          } else {
+            actionTrigger.addEventListener('click', () => {
+              const action = actionTrigger.getAttribute('data-media-action');
+              if (action == 'align-left' || action == 'align-right' || action == 'align-center') {
+                mediaItem.classList.remove(...Array.from(mediaItem.classList).filter(className => className.startsWith('align-')));
+                mediaItem.classList.add(action);
+              } else if (action == 'inline') {
+                mediaItem.classList.toggle(action);
+              } else if (action == 'delete') {
+                mediaItem.remove();
+                popoverDOM.remove();
+              }
+            });
+          }
+        });
 
         // Close popover
         const tempCloseEvent = (ev) => {
@@ -1643,8 +1684,10 @@ class OzzWyg {
       // Parse HTML from text content
       const htmlContent = this.playGround.textContent;
       this.playGround.innerHTML = htmlContent;
-      this.tableActions(); // Init table Actions
-      this.mediaPopover(); // Config Media Popover
+      // Re-initialize all interactive features after switching back to visual view
+      setTimeout(() => {
+        this.initializeContentFeatures();
+      }, 0);
     } else {
       this.playGround.querySelectorAll('[contenteditable="false"]').forEach(element => {
         element.remove();
@@ -1668,6 +1711,105 @@ class OzzWyg {
       return firstInstance.playGround.innerHTML;
     }
     return this.playGround ? this.playGround.innerHTML : '';
+  }
+
+  /**
+   * Initialize interactive features for loaded content
+   * This should be called after setting content via setValue or when content is loaded
+   */
+  initializeContentFeatures() {
+    if (!this.playGround) return;
+    
+    // Wrap tables that aren't wrapped yet
+    const tables = this.playGround.querySelectorAll('table');
+    tables.forEach((table) => {
+      if (!table.closest('.ozz-wyg-table-wrapper')) {
+        const tableWrapped = document.createElement('div');
+        tableWrapped.classList.add('ozz-wyg-table-wrapper');
+        const tableParent = table.parentNode;
+        tableParent.insertBefore(tableWrapped, table);
+        tableWrapped.appendChild(table);
+        
+        // Clear inline styles
+        table.removeAttribute('style');
+        const tItems = table.querySelectorAll('tbody, thead, tfoot, tr, td, th');
+        tItems.forEach(item => {
+          item.removeAttribute('style');
+        });
+      }
+    });
+    
+    // Remove existing handlers to re-initialize
+    this.playGround.querySelectorAll('[data-link-handled]').forEach(el => {
+      el.removeAttribute('data-link-handled');
+    });
+    this.playGround.querySelectorAll('[data-media-handled]').forEach(el => {
+      el.removeAttribute('data-media-handled');
+    });
+    this.playGround.querySelectorAll('[data-table-handled]').forEach(el => {
+      el.removeAttribute('data-table-handled');
+    });
+    
+    // Initialize all interactive features
+    this.mediaPopover();
+    this.tableActions();
+    this.linkPopOver();
+  }
+
+  /**
+   * Set value for editor
+   * @param {string} value - HTML string to set
+   * @param {string|null} editorID - target editor ID; if null and single editor exists, applies to first
+   */
+  setValue(value, editorID = null) {
+    if (value === undefined || value === null) return;
+
+    let targetInstance = null;
+    if (editorID && this.editorInstances.has(editorID)) {
+      targetInstance = this.editorInstances.get(editorID);
+    } else if (this.editorInstances.size === 1) {
+      targetInstance = this.editorInstances.values().next().value;
+    }
+
+    let playGroundToSet = null;
+    let editorToSet = null;
+    let editorIDToSet = null;
+
+    if (targetInstance && targetInstance.playGround) {
+      playGroundToSet = targetInstance.playGround;
+      editorToSet = targetInstance.element;
+      editorIDToSet = targetInstance.id;
+    } else if (this.playGround) {
+      playGroundToSet = this.playGround;
+      editorToSet = this.editor;
+      editorIDToSet = this.editorID;
+    }
+
+    if (playGroundToSet) {
+      // Set the content
+      playGroundToSet.innerHTML = value;
+      
+      // Set context for initialization
+      const originalEditor = this.editor;
+      const originalPlayGround = this.playGround;
+      const originalEditorID = this.editorID;
+      
+      this.editor = editorToSet;
+      this.playGround = playGroundToSet;
+      this.editorID = editorIDToSet;
+      if (editorIDToSet) {
+        this.currentEditorID = editorIDToSet;
+      }
+      
+      // Initialize features after DOM update
+      setTimeout(() => {
+        this.initializeContentFeatures();
+        // Restore original context after initialization
+        this.editor = originalEditor;
+        this.playGround = originalPlayGround;
+        this.editorID = originalEditorID;
+      }, 0);
+    }
   }
 
   /**
@@ -1754,6 +1896,20 @@ OzzWyg.getValue = function(selector) {
     return instance.getValue(editorID);
   }
   return '';
+};
+
+/**
+ * Static method to set value for editor by selector or element
+ * @param {string|HTMLElement} selector - CSS selector or DOM element
+ * @param {string} value - HTML string
+ */
+OzzWyg.setValue = function(selector, value) {
+  const instance = OzzWyg.getInstance(selector);
+  if (instance) {
+    const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
+    const editorID = element ? element.getAttribute('data-editor') : null;
+    instance.setValue(value, editorID);
+  }
 };
 
 /**
