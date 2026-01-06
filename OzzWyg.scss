@@ -282,7 +282,7 @@ $icon_dir: './';
     }
   }
   &__editor-area {
-    overflow: auto;
+    overflow-x: auto;
     min-height: 150px;
     padding: 10px;
     border: 1px solid $light-3;
