@@ -356,58 +356,85 @@ class OzzWyg {
     
     // Get pasted content
     const clipboardData = e.clipboardData || window.clipboardData;
-    const pastedData = clipboardData.getData('text/html') || clipboardData.getData('text/plain');
+    const htmlData = clipboardData.getData('text/html');
+    const textData = clipboardData.getData('text/plain');
+    const pastedData = htmlData || textData;
     
     // Clean the pasted content
     const cleanedContent = this.cleanPastedContent(pastedData);
     
-    // Insert cleaned content
-    const selection = window.getSelection();
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      
-      // Delete selected content (deleteContents is a Range method, not Selection)
-      range.deleteContents();
-      
+    try {
       // Insert cleaned content
-      if (cleanedContent) {
-        // If it's HTML, use fragment
-        if (pastedData.includes('<')) {
-          const fragment = range.createContextualFragment(cleanedContent);
-          range.insertNode(fragment);
-          
-          // Move cursor to end of inserted content
-          if (fragment.lastChild) {
-            range.setStartAfter(fragment.lastChild);
-          } else {
-            range.setStartAfter(fragment);
-          }
-        } else {
-          // Plain text
-          const textNode = document.createTextNode(cleanedContent);
-          range.insertNode(textNode);
-          range.setStartAfter(textNode);
-        }
-        range.collapse(true);
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
         
-        // Update selection
-        selection.removeAllRanges();
-        selection.addRange(range);
-      }
-    } else {
-      // No selection, insert at cursor position
-      const range = document.createRange();
-      range.selectNodeContents(this.playGround);
-      range.collapse(false);
-      
-      if (cleanedContent) {
-        if (pastedData.includes('<')) {
-          const fragment = range.createContextualFragment(cleanedContent);
-          range.insertNode(fragment);
-        } else {
-          const textNode = document.createTextNode(cleanedContent);
-          range.insertNode(textNode);
+        // Ensure range is within this editor; otherwise collapse to end of playground
+        const containerNode = range.commonAncestorContainer.nodeType === 3
+          ? range.commonAncestorContainer.parentElement
+          : range.commonAncestorContainer;
+        if (!containerNode || !this.playGround.contains(containerNode)) {
+          range.selectNodeContents(this.playGround);
+          range.collapse(false);
         }
+
+        // Delete selected content
+        range.deleteContents();
+        
+        // Insert cleaned content
+        if (cleanedContent) {
+          if (htmlData && cleanedContent.includes('<')) {
+            // Treat as HTML: parse into a temp container and move children into a fragment
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cleanedContent;
+            const fragment = document.createDocumentFragment();
+            while (tempDiv.firstChild) {
+              fragment.appendChild(tempDiv.firstChild);
+            }
+            range.insertNode(fragment);
+
+            // Move cursor to end of inserted content
+            const lastChild = this.playGround.lastChild;
+            if (lastChild) {
+              range.setStartAfter(lastChild);
+            }
+          } else {
+            // Plain text
+            const textNode = document.createTextNode(cleanedContent);
+            range.insertNode(textNode);
+            range.setStartAfter(textNode);
+          }
+          range.collapse(true);
+          
+          // Update selection
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      } else {
+        // No selection, insert at end of playground
+        const range = document.createRange();
+        range.selectNodeContents(this.playGround);
+        range.collapse(false);
+        
+        if (cleanedContent) {
+          if (htmlData && cleanedContent.includes('<')) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cleanedContent;
+            const fragment = document.createDocumentFragment();
+            while (tempDiv.firstChild) {
+              fragment.appendChild(tempDiv.firstChild);
+            }
+            range.insertNode(fragment);
+          } else {
+            const textNode = document.createTextNode(cleanedContent);
+            range.insertNode(textNode);
+          }
+        }
+      }
+    } catch (err) {
+      // Fallback: let the browser handle it if our manual insertion fails
+      if (cleanedContent) {
+        document.execCommand('insertHTML', false, cleanedContent);
       }
     }
 
