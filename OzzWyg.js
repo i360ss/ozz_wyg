@@ -181,9 +181,26 @@ class OzzWyg {
         } else {
           // Initialize features for any existing content in playground
           setTimeout(() => {
-            this.setActiveContextFromElement(editor);
-            if (this.playGround) {
+            // Ensure we're using the correct instance
+            const instancePlayGround = instance.playGround;
+            const instanceEditor = instance.element;
+            if (instancePlayGround) {
+              // Set context for initialization
+              const originalEditor = this.editor;
+              const originalPlayGround = this.playGround;
+              const originalEditorID = this.editorID;
+              
+              this.editor = instanceEditor;
+              this.playGround = instancePlayGround;
+              this.editorID = instance.id;
+              this.currentEditorID = instance.id;
+              
               this.initializeContentFeatures();
+              
+              // Restore original context
+              this.editor = originalEditor;
+              this.playGround = originalPlayGround;
+              this.editorID = originalEditorID;
             }
           }, 0);
         }
@@ -1789,21 +1806,23 @@ class OzzWyg {
       // Set the content
       playGroundToSet.innerHTML = value;
       
-      // Set context for initialization
-      const originalEditor = this.editor;
-      const originalPlayGround = this.playGround;
-      const originalEditorID = this.editorID;
-      
-      this.editor = editorToSet;
-      this.playGround = playGroundToSet;
-      this.editorID = editorIDToSet;
-      if (editorIDToSet) {
-        this.currentEditorID = editorIDToSet;
-      }
-      
       // Initialize features after DOM update
+      // Use captured values in closure to ensure correct editor instance
       setTimeout(() => {
+        // Set context for initialization using captured values
+        const originalEditor = this.editor;
+        const originalPlayGround = this.playGround;
+        const originalEditorID = this.editorID;
+        
+        this.editor = editorToSet;
+        this.playGround = playGroundToSet;
+        this.editorID = editorIDToSet;
+        if (editorIDToSet) {
+          this.currentEditorID = editorIDToSet;
+        }
+        
         this.initializeContentFeatures();
+        
         // Restore original context after initialization
         this.editor = originalEditor;
         this.playGround = originalPlayGround;
