@@ -1,4 +1,4 @@
-$light-1: #F7F9FA;
+$light-1: #fff;
 $light-2: #eee;
 $light-3: #ddd;
 $light-4: #ccc;
@@ -12,7 +12,7 @@ $fs-1: 14px;
 $icon_dir: './';
 
 @mixin ozz-wyg-icon-btn {
-  font-size: 0;
+  font-size: 0 !important;
   line-height: 1.7rem;
   background-image: url('#{$icon_dir}/tools.svg');
   background-repeat: no-repeat;
@@ -27,9 +27,9 @@ $icon_dir: './';
     padding: 3px;
     border: 1px solid $light-3;
     border-bottom-color: transparent;
-    border-radius: 5px 5px 0 0;
+    border-radius: 10px 10px 0 0;
     background: $light-1;
-    z-index: 110;
+    z-index: 1;
   }
   &__tool {
     display: inline-block;
@@ -56,7 +56,7 @@ $icon_dir: './';
       padding: 6px;
       height: 32px;
       background-color: $light-1;
-      border-radius: 3px;
+      border-radius: 6px;
       &:not(.ozz-wyg-regular-btn) {
         width: 32px;
       }
@@ -65,8 +65,8 @@ $icon_dir: './';
         background-color: $light-2;
       }
       &.active {
-        border: 1px solid $light-2;
-        background-color: $light-2;
+        border: 1px solid $light-3;
+        background-color: $light-3;
       }
     }
     &:not(.ozz-wyg__tool--headings) {
@@ -286,7 +286,7 @@ $icon_dir: './';
     min-height: 150px;
     padding: 10px;
     border: 1px solid $light-3;
-    border-radius: 0 0 5px 5px;
+    border-radius: 0 0 10px 10px;
     outline: none;
     background-color: #fff;
     margin: 0;
@@ -313,6 +313,19 @@ $icon_dir: './';
       > p {
         margin-top: 0;
       }
+    }
+    ul {
+      li {
+        list-style: disc;
+      }
+    }
+    ol {
+      li {
+        list-style: decimal;
+      }
+    }
+    i {
+      font-style: italic;
     }
     // Media Element
     .media-wrapper,
