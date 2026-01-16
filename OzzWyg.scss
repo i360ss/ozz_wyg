@@ -3,9 +3,16 @@ $light-2: #eee;
 $light-3: #ddd;
 $light-4: #ccc;
 $yellow-1: #eec927;
+$blue: #5168f4;
+$black: #000;
 $dark-1: #18181A;
 $dark-2: #232327;
 $dark-3: #424247;
+
+$dark-theme-1: #1e1f27;
+$dark-theme-2: #2a2b38;
+$dark-theme-3: #373a49;
+$dark-theme-4: #3f4354;
 
 $fs-1: 14px;
 
@@ -20,7 +27,7 @@ $icon_dir: './';
 
 .ozz-wyg {
   all: unset;
-  font-family: sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   &__toolbar {
     position: sticky;
     top: 0;
@@ -172,7 +179,7 @@ $icon_dir: './';
         width: 200px;
         border: 1px solid $light-3;
         outline: none;
-        border-radius: 3px;
+        border-radius: 6px;
       }
       button {
         background: $dark-2;
@@ -206,7 +213,7 @@ $icon_dir: './';
         span {
           display: flex;
           flex-direction: row;
-          align-items: end;
+          align-items: center;
           gap: 10px;
         }
       }
@@ -242,8 +249,9 @@ $icon_dir: './';
           border: none;
           text-align: left;
           font-weight: 500;
-          &:hover {
-            background: $light-2;
+          &:hover,
+          &.active {
+            background: $light-3;
           }
           &[data-value="h1"] {
             font-size: 18px;
@@ -317,11 +325,13 @@ $icon_dir: './';
     ul {
       li {
         list-style: disc;
+        line-height: 2rem;
       }
     }
     ol {
       li {
         list-style: decimal;
+        line-height: 2rem;
       }
     }
     i {
@@ -445,7 +455,7 @@ $icon_dir: './';
         cursor: pointer;
         position: relative;
         font-size: 12px;
-        z-index: 100;
+        z-index: 0;
       }
       .ozz-wyg-editlink,
       .ozz-wyg-unlink {
@@ -560,6 +570,131 @@ $icon_dir: './';
         line-height: 0 !important;
         border-radius: 3px;
         vertical-align: middle;
+      }
+    }
+  }
+
+  // Dark theme
+  &[data-theme="dark"] {
+    .ozz-wyg__toolbar {
+      background: $dark-theme-2;
+      border-color: $dark-theme-3;
+    }
+    .ozz-wyg__tool {
+      button {
+        filter: invert(1);
+        background-color: transparent;
+        &.active {
+          background-color: $light-1;
+        }
+      }
+      &.ozz-wyg__tool--headings {
+        .ozz-wyg__tool-child {
+          button {
+            filter: none;
+            color: $light-2;
+            &:hover,
+            &.active {
+              background: $dark-theme-4;
+            }
+          }
+        }
+      }
+    }
+    .ozz-wyg__tool-child {
+      background: $dark-theme-2;
+      border-color: $dark-theme-3;
+    }
+    .ozz-wyg__tool-link-setting,
+    .ozz-wyg__tool-table-setting,
+    .ozz-wyg__tool-media-setting {
+      background: $dark-theme-2;
+      border-color: $dark-theme-3;
+      * {
+        color: $light-3;
+      }
+      input {
+        background: $dark-theme-1;
+        border-color: $dark-theme-3;
+        &[type="checkbox"] {
+          appearance: none;
+          -webkit-appearance: none;
+          &:checked {
+            background: $blue;
+          }
+        }
+      }
+      .ozz-wyg-regular-btn {
+        filter: none;
+        background: $dark-theme-1;
+        &:hover {
+          background: $black;
+        }
+      }
+    }
+    // Editor area
+    .ozz-wyg__editor-area {
+      background: $dark-theme-1;
+      border-color: $dark-theme-3;
+      border-top: none;
+      &.ozz-wyg-html-view {
+        background: $black;
+      }
+      * {
+        color: $light-3;
+      }
+      a {
+        color: $blue;
+      }
+      blockquote {
+        background: $dark-theme-2;
+        border-left-color: $dark-theme-4;
+      }
+      code {
+        background: $dark-theme-2;
+        border-color: $dark-theme-3;
+      }
+      table {
+        tfoot,
+        thead {
+          th,
+          td {
+            background: $dark-theme-3;
+          }
+        }
+        tbody {
+          td {
+            background: $dark-theme-2;
+          }
+        }
+        th,
+        td {
+          border-color: $dark-theme-1;
+        }
+      }
+      // Popover
+      .ozz-wyg-popover,
+      .ozz-wyg-media-actions {
+        background: $dark-theme-3;
+        border-color: $dark-theme-4;
+        select,
+        button {
+          filter: invert(1);
+          background-color: transparent;
+          color: $dark-theme-1;
+        }
+      }
+    }
+    // Table
+    .ozz-wyg-table-wrapper {
+      .ozz-wyg-table-actions {
+        &__row,
+        &__column {
+          button {
+            filter: invert(1);
+            background-color: $light-4;
+          }
+        }
       }
     }
   }
