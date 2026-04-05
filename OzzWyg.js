@@ -189,14 +189,14 @@ class OzzWyg {
               const originalEditor = this.editor;
               const originalPlayGround = this.playGround;
               const originalEditorID = this.editorID;
-              
+
               this.editor = instanceEditor;
               this.playGround = instancePlayGround;
               this.editorID = instance.id;
               this.currentEditorID = instance.id;
-              
+
               this.initializeContentFeatures();
-              
+
               // Restore original context
               this.editor = originalEditor;
               this.playGround = originalPlayGround;
@@ -204,7 +204,7 @@ class OzzWyg {
             }
           }, 0);
         }
-        
+
         // Register instance in static registry
         OzzWyg.instances.set(editor, this);
         OzzWyg.instances.set(editorID, this);
@@ -244,7 +244,7 @@ class OzzWyg {
         this.fireAction(e);
       });
     });
-    
+
     // Initialize child tool dropdowns
     this.editor.querySelectorAll('.ozz-wyg__tool-has-child').forEach(parent => {
       const trigger = parent.querySelector('.more-tools-trigger');
@@ -256,7 +256,7 @@ class OzzWyg {
         });
       }
     });
-    
+
     // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.ozz-wyg__tool-has-child')) {
@@ -265,9 +265,9 @@ class OzzWyg {
         });
       }
     });
-    
+
     this.playGround = this.editor.querySelector('[data-editor-area]');
-    
+
     // Initialize event listeners
     this.initEventListeners();
   }
@@ -278,12 +278,14 @@ class OzzWyg {
   initEventListeners() {
     // Input event - fires on content change
     this.playGround.addEventListener('input', (e) => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       this.handleInput(e);
     });
 
     // Focus event - when editor gains focus
     this.playGround.addEventListener('focus', (e) => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       this.emitEvent('focus', { editorID: this.editorID, event: e });
       this.editor.classList.add('ozz-wyg--focused');
@@ -291,6 +293,7 @@ class OzzWyg {
 
     // Blur event - when editor loses focus
     this.playGround.addEventListener('blur', (e) => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       this.emitEvent('blur', { editorID: this.editorID, event: e });
       this.editor.classList.remove('ozz-wyg--focused');
@@ -303,18 +306,21 @@ class OzzWyg {
 
     // Paste event - clean pasted content
     this.playGround.addEventListener('paste', (e) => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       this.handlePaste(e);
     });
 
     // Keyboard shortcuts
     this.playGround.addEventListener('keydown', (e) => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       this.handleKeydown(e);
     });
 
     // Selection change - update toolbar states
     document.addEventListener('selectionchange', () => {
+      if (this.isHTML()) return;
       const selection = window.getSelection();
       if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
@@ -330,24 +336,28 @@ class OzzWyg {
 
     // Click event - update toolbar states when clicking in editor
     this.playGround.addEventListener('click', () => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Mouseup event - update toolbar states after selection
     this.playGround.addEventListener('mouseup', () => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Keyup event - update toolbar states after keyboard actions
     this.playGround.addEventListener('keyup', () => {
+      if (this.isHTML()) return;
       this.setActiveContextFromElement(this.playGround);
       setTimeout(() => this.updateToolbarStates(), 10);
     });
 
     // Keydown event - update toolbar states for arrow keys and other navigation
     this.playGround.addEventListener('keydown', (e) => {
+      if (this.isHTML()) return;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
         this.setActiveContextFromElement(this.playGround);
         setTimeout(() => this.updateToolbarStates(), 10);
@@ -391,22 +401,22 @@ class OzzWyg {
    */
   handlePaste(e) {
     e.preventDefault();
-    
+
     // Get pasted content
     const clipboardData = e.clipboardData || window.clipboardData;
     const htmlData = clipboardData.getData('text/html');
     const textData = clipboardData.getData('text/plain');
     const pastedData = htmlData || textData;
-    
+
     // Clean the pasted content
     const cleanedContent = this.cleanPastedContent(pastedData);
-    
+
     try {
       // Insert cleaned content
       const selection = window.getSelection();
       if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        
+
         // Ensure range is within this editor; otherwise collapse to end of playground
         const containerNode = range.commonAncestorContainer.nodeType === 3
           ? range.commonAncestorContainer.parentElement
@@ -418,7 +428,7 @@ class OzzWyg {
 
         // Delete selected content
         range.deleteContents();
-        
+
         // Insert cleaned content
         if (cleanedContent) {
           if (htmlData && cleanedContent.includes('<')) {
@@ -443,7 +453,7 @@ class OzzWyg {
             range.setStartAfter(textNode);
           }
           range.collapse(true);
-          
+
           // Update selection
           selection.removeAllRanges();
           selection.addRange(range);
@@ -453,7 +463,7 @@ class OzzWyg {
         const range = document.createRange();
         range.selectNodeContents(this.playGround);
         range.collapse(false);
-        
+
         if (cleanedContent) {
           if (htmlData && cleanedContent.includes('<')) {
             const tempDiv = document.createElement('div');
@@ -595,7 +605,7 @@ class OzzWyg {
 
     const range = selection.getRangeAt(0);
     const commonAncestor = range.commonAncestorContainer;
-    
+
     // Check if selection is within this editor
     const node = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
     if (!node || !this.playGround.contains(node)) {
@@ -760,7 +770,7 @@ class OzzWyg {
     if (node.nodeType === 3) {
       node = node.parentElement;
     }
-    
+
     while (node && node !== this.playGround) {
       if (node.nodeType === 1 && tagNames.includes(node.tagName.toLowerCase())) {
         return node;
@@ -778,7 +788,7 @@ class OzzWyg {
     if (node.nodeType === 3) {
       node = node.parentElement;
     }
-    
+
     // Find the block-level element
     let blockTag = null;
     while (node && node !== this.playGround) {
@@ -791,7 +801,7 @@ class OzzWyg {
       }
       node = node.parentElement;
     }
-    
+
     // Update heading/format buttons
     const headingBtns = this.editor.querySelectorAll('button[data-action="formatBlock"]');
     headingBtns.forEach(btn => {
@@ -832,7 +842,7 @@ class OzzWyg {
       bubbles: true,
       cancelable: true
     });
-    
+
     // Dispatch on both the editor element and the playground
     this.editor.dispatchEvent(event);
     this.playGround.dispatchEvent(event);
@@ -1035,7 +1045,7 @@ class OzzWyg {
         return;
       }
       anchor.setAttribute('data-link-handled', 'true');
-      
+
       anchor.addEventListener('click', (e) => {
         if (anchor.getAttribute('role') !== 'popover') {
           e.preventDefault();
@@ -1528,23 +1538,23 @@ class OzzWyg {
         if (existingPopover) {
           existingPopover.remove();
         }
-        
+
         mediaItem.insertAdjacentElement('afterend', popoverDOM);
 
         // Position popover element at the click point
         // Get the editor's position relative to viewport
         const editorRect = this.editor.getBoundingClientRect();
-        
+
         // Calculate position relative to editor container
         const relativeX = e.clientX - editorRect.left;
         const relativeY = e.clientY - editorRect.top;
-        
+
         // Ensure editor has relative positioning for absolute children
         const editorPosition = window.getComputedStyle(this.editor).position;
         if (editorPosition === 'static') {
           this.editor.style.position = 'relative';
         }
-        
+
         // Set position relative to editor (not absolute screen coordinates)
         popoverDOM.style.position = 'absolute';
         popoverDOM.style.top = `${relativeY}px`;
@@ -1697,20 +1707,57 @@ class OzzWyg {
    */
   toggleCodeView() {
     if (this.isHTML()) {
+      // BACK TO VISUAL MODE
       this.playGround.classList.remove('ozz-wyg-html-view');
-      // Parse HTML from text content
-      const htmlContent = this.playGround.textContent;
-      this.playGround.innerHTML = htmlContent;
-      // Re-initialize all interactive features after switching back to visual view
+      const textarea = this.playGround.querySelector('.ozz-wyg-html-editor');
+      const html = textarea ? textarea.value : '';
+      this.playGround.innerHTML = html;
+      this.playGround.setAttribute('contenteditable', 'true'); // Restore editable mode
+
+      // Enable tools
+      this.editor.querySelectorAll('.ozz-wyg__tool').forEach(tool => {
+        tool.removeAttribute('disabled');
+      });
+
       setTimeout(() => {
         this.initializeContentFeatures();
       }, 0);
     } else {
-      this.playGround.querySelectorAll('[contenteditable="false"]').forEach(element => {
-        element.remove();
-      });
+      // SWITCH TO HTML MODE
+      // Remove non-editable elements (like buttons, widgets)
+      this.playGround.querySelectorAll('[contenteditable="false"]').forEach(el => el.remove());
+
+      // Get current visual content
+      const html = this.playGround.innerHTML;
+
+      // Enable HTML view mode
       this.playGround.classList.add('ozz-wyg-html-view');
-      this.playGround.textContent = this.playGround.innerHTML;
+      this.playGround.setAttribute('contenteditable', 'false'); // Prevent editing on playGround itself
+      this.playGround.innerHTML = ''; // Clear current content
+
+      // Create textarea for code editing
+      const textarea = document.createElement('textarea');
+      textarea.className = 'ozz-wyg-html-editor';
+      textarea.style.width = '100%';
+      textarea.style.minHeight = '150px';
+      textarea.value = html;
+
+      this.playGround.appendChild(textarea);
+
+      // Focus the textarea
+      setTimeout(() => {
+        textarea.focus();
+      }, 0);
+
+      // Disable all tools except Code View toggle
+      this.editor.querySelectorAll('.ozz-wyg__tool').forEach(tool => {
+        if (!tool.classList.contains('ozz-wyg__tool--codeView')) {
+          tool.setAttribute('disabled', 'true');
+        }
+      });
+
+      // Dynamically bind events to textarea so custom listeners work
+      this.bindTextareaEvents(textarea);
     }
   }
 
@@ -1719,15 +1766,26 @@ class OzzWyg {
    * @param {string} editorID - Optional editor ID, if not provided returns first editor's value
    */
   getValue(editorID = null) {
+    let targetInstance = null;
+
     if (editorID && this.editorInstances.has(editorID)) {
-      return this.editorInstances.get(editorID).playGround.innerHTML;
+      targetInstance = this.editorInstances.get(editorID);
+    } else if (this.editorInstances.size > 0) {
+      targetInstance = this.editorInstances.values().next().value;
+    } else if (this.playGround) {
+      targetInstance = { playGround: this.playGround };
+    } else {
+      return '';
     }
-    // Return first editor's value for backward compatibility
-    if (this.editorInstances.size > 0) {
-      const firstInstance = this.editorInstances.values().next().value;
-      return firstInstance.playGround.innerHTML;
+
+    const pg = targetInstance.playGround;
+
+    if (this.isHTML()) {
+      const textarea = pg.querySelector('.ozz-wyg-html-editor');
+      return textarea ? textarea.value : '';
     }
-    return this.playGround ? this.playGround.innerHTML : '';
+
+    return pg.innerHTML;
   }
 
   /**
@@ -1846,6 +1904,27 @@ class OzzWyg {
    */
   getAllEditorInstances() {
     return this.editorInstances;
+  }
+
+  /**
+  * Ensure custom events propagate from textarea in code mode dynamically
+  */
+  bindTextareaEvents(textarea, events = ['input', 'blur', 'change', 'keyup']) {
+    if (!textarea) return;
+
+    events.forEach(eventName => {
+      textarea.addEventListener(eventName, (e) => {
+        const event = new CustomEvent(`ozzwyg:${eventName}`, {
+          bubbles: true,
+          detail: {
+            editorID: this.editorID,
+            content: textarea.value,
+            originalEvent: e
+          }
+        });
+        this.editor.dispatchEvent(event);
+      });
+    });
   }
 
   /**
